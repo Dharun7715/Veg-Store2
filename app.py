@@ -40,11 +40,10 @@ def login():
     if request.method == 'POST':
         phone = request.form['phone']
 
-        # ✅ VALIDATION
         if len(phone) != 10 or not phone.isdigit():
             return "❌ Enter valid 10-digit number"
 
-        otp = phone[-4:]  # 🔥 last 4 digits
+        otp = phone[-4:]
         session['otp'] = otp
         session['phone'] = phone
 
@@ -84,6 +83,15 @@ def home():
                            vegetables=vegetables,
                            cart=cart,
                            cart_count=cart_count)
+
+
+# 👤 PROFILE
+@app.route('/profile')
+def profile():
+    if "user" not in session:
+        return redirect('/login')
+
+    return render_template("profile.html", user=session['user'])
 
 
 # ➕ ADD
@@ -148,7 +156,13 @@ def cart():
     return render_template("cart.html", items=items, total=total)
 
 
-# 💳 PAYMENT (FAKE)
+# 🔥 CHECKOUT FIX
+@app.route('/checkout')
+def checkout():
+    return redirect('/payment')
+
+
+# 💳 PAYMENT
 @app.route('/payment')
 def payment():
     cart = session.get("cart", {})
