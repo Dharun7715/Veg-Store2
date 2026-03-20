@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Veg Store</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #00c9ff, #92fe9d);
+}
+
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 15px;
+}
+
+h2 {
+    text-align: center;
+    color: white;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.top-bar a {
+    color: white;
+    padding: 8px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.cart { background: green; }
+.orders { background: orange; }
+.profile { background: purple; }
+.logout { background: red; }
+
+.card {
+    background: white;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 15px;
+}
+
+.btn {
+    background: green;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+.qty {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>🥦 Fresh Veg Store</h2>
+
+<div class="top-bar">
+    <a href="/cart" class="cart">🛒 {{ cart_count }}</a>
+    <a href="/orders" class="orders">📦 Orders</a>
+    <a href="/profile" class="profile">👤 Profile</a>
+    <a href="/logout" class="logout">Logout</a>
+</div>
+
+{% for veg in vegetables %}
+<div class="card">
+
+<h3>{{ veg.name }}</h3>
+<p>₹{{ veg.price }}/kg</p>
+
+{% set qty = cart.get(veg.name, 0) %}
+
+{% if qty > 0 %}
+<div class="qty">
+    <a href="/decrease/{{ veg.name }}" class="btn">➖</a>
+    <span>{{ qty }}</span>
+    <a href="/increase/{{ veg.name }}" class="btn">➕</a>
+</div>
+{% else %}
+<a href="/add/{{ veg.name }}" class="btn">Add to Cart</a>
+{% endif %}
+
+</div>
+{% endfor %}
+
+</div>
+
+</body>
+</html>
