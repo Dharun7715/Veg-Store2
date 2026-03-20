@@ -2,66 +2,37 @@
 <html>
 <head>
     <title>Login</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <style>
         body {
             margin: 0;
             font-family: Arial;
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #00c9ff, #92fe9d);
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
         }
 
         .box {
             background: white;
             padding: 30px;
             border-radius: 20px;
-            width: 320px;
+            width: 300px;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-
-        h2 {
-            margin-bottom: 20px;
         }
 
         input {
             width: 90%;
-            padding: 12px;
+            padding: 10px;
             margin: 10px 0;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-            font-size: 14px;
         }
 
         button {
             width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            background: #27ae60;
+            padding: 10px;
+            background: green;
             color: white;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background: #219150;
-        }
-
-        .title {
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            font-size: 13px;
-            color: gray;
-            margin-bottom: 15px;
+            border: none;
         }
     </style>
 </head>
@@ -69,15 +40,14 @@
 <body>
 
 <div class="box">
+    <h2>📱 Login</h2>
 
-<div class="title">🥦 Veg Store</div>
-<div class="subtitle">Login with your mobile number</div>
-
-<form method="POST">
-    <input type="text" name="phone" placeholder="Enter phone number" required>
-    <button type="submit">📱 Send OTP</button>
-</form>
-
+    <form method="POST">
+        <input type="text" name="phone"
+               placeholder="Enter 10-digit mobile number"
+               maxlength="10" required>
+        <button type="submit">Send OTP</button>
+    </form>
 </div>
 
 </body>
