@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Orders</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 15px;
+}
+
+h2 {
+    text-align: center;
+    color: white;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    margin: 12px 0;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: fadeIn 0.5s ease;
+}
+
+.card h3 {
+    margin: 0;
+}
+
+.price {
+    color: #555;
+}
+
+.status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: white;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.pending { background: orange; }
+.shipped { background: blue; }
+.delivered { background: green; }
+
+.back {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    padding: 10px;
+    background: white;
+    border-radius: 10px;
+    text-decoration: none;
+    color: black;
+}
+
+.empty {
+    text-align: center;
+    color: white;
+    margin-top: 60px;
+}
+
+/* animation */
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>📦 My Orders</h2>
+
+{% if orders %}
+    {% for item, qty, total, status in orders %}
+    <div class="card">
+
+        <h3>{{ item }}</h3>
+        <p class="price">Quantity: {{ qty }}</p>
+        <p class="price">Total: ₹{{ total }}</p>
+
+        {% if status == 'Pending' %}
+            <span class="status pending">🟡 Pending</span>
+        {% elif status == 'Shipped' %}
+            <span class="status shipped">🔵 Shipped</span>
+        {% elif status == 'Delivered' %}
+            <span class="status delivered">🟢 Delivered</span>
+        {% endif %}
+
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty">
+        <h3>No orders yet 😢</h3>
+    </div>
+{% endif %}
+
+<a href="/" class="back">⬅ Back to Home</a>
+
+</div>
+
+</body>
+</html>

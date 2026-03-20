@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #2c3e50;
+    color: white;
+}
+
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 15px;
+}
+
+h2 {
+    text-align: center;
+}
+
+/* stats */
+.stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.box {
+    background: #34495e;
+    padding: 10px;
+    border-radius: 10px;
+    width: 48%;
+    text-align: center;
+}
+
+/* card */
+.card {
+    background: #34495e;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 10px;
+}
+
+select, button {
+    padding: 5px;
+    margin-top: 5px;
+}
+
+.bar {
+    height: 10px;
+    background: green;
+    margin-top: 5px;
+    border-radius: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>👑 Admin Dashboard</h2>
+
+<div class="stats">
+    <div class="box">
+        <h3>{{ total_orders }}</h3>
+        <p>Orders</p>
+    </div>
+    <div class="box">
+        <h3>₹{{ total_revenue }}</h3>
+        <p>Revenue</p>
+    </div>
+</div>
+
+{% for id, u, item, qty, total, status in orders %}
+<div class="card">
+
+<p><b>{{ u }}</b></p>
+<p>{{ item }} × {{ qty }}</p>
+<p>₹{{ total }}</p>
+
+<!-- simple bar -->
+<div class="bar" style="width: {{ total }}px;"></div>
+
+<form method="POST">
+<input type="hidden" name="id" value="{{ id }}">
+
+<select name="status">
+<option {% if status=='Pending' %}selected{% endif %}>Pending</option>
+<option {% if status=='Shipped' %}selected{% endif %}>Shipped</option>
+<option {% if status=='Delivered' %}selected{% endif %}>Delivered</option>
+</select>
+
+<button>Update</button>
+</form>
+
+</div>
+{% endfor %}
+
+<a href="/">⬅ Back</a>
+
+</div>
+
+</body>
+</html>

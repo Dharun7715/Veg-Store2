@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Success</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: linear-gradient(135deg, #00c9ff, #92fe9d);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: pop 0.5s ease;
+        }
+
+        h2 {
+            color: green;
+        }
+
+        .tick {
+            font-size: 60px;
+            animation: bounce 1s infinite;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: green;
+            color: white;
+            border-radius: 10px;
+            text-decoration: none;
+        }
+
+        @keyframes pop {
+            from {transform: scale(0);}
+            to {transform: scale(1);}
+        }
+
+        @keyframes bounce {
+            0%,100% {transform: translateY(0);}
+            50% {transform: translateY(-10px);}
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+<div class="tick">✅</div>
+
+<h2>Order Placed Successfully!</h2>
+<p>Your items will be delivered soon 🚀</p>
+
+<a href="/">🏠 Back to Home</a>
+
+</div>
+
+</body>
+</html>

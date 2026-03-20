@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Payment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.box {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    width: 300px;
+}
+
+button {
+    padding: 12px;
+    width: 100%;
+    background: green;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>💳 Payment</h2>
+<p>Total Amount: ₹{{ total }}</p>
+
+<button onclick="pay()">Pay Now</button>
+
+</div>
+
+<script>
+function pay(){
+    alert("Payment Successful ✅");
+    window.location.href = "/success";
+}
+</script>
+
+</body>
+</html>

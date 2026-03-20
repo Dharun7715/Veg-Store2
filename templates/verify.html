@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify OTP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: gray;
+            margin-bottom: 20px;
+        }
+
+        .otp-input {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .otp-input input {
+            width: 45px;
+            height: 50px;
+            font-size: 20px;
+            text-align: center;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: #27ae60;
+            color: white;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: #219150;
+        }
+
+        .resend {
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .resend a {
+            color: #ff4d6d;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+<div class="title">🔐 Verify OTP</div>
+<div class="subtitle">Enter the OTP sent to your number</div>
+
+<form method="POST">
+    <div class="otp-input">
+        <input type="text" maxlength="1">
+        <input type="text" maxlength="1">
+        <input type="text" maxlength="1">
+        <input type="text" maxlength="1">
+    </div>
+
+    <!-- Hidden field to send full OTP -->
+    <input type="hidden" name="otp" id="otp">
+
+    <button type="submit">Verify</button>
+</form>
+
+<div class="resend">
+    Didn’t get OTP? <a href="/login">Resend</a>
+</div>
+
+</div>
+
+<script>
+    const inputs = document.querySelectorAll(".otp-input input");
+    const hidden = document.getElementById("otp");
+
+    inputs.forEach((input, index) => {
+        input.addEventListener("input", () => {
+            if (input.value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+
+            let otp = "";
+            inputs.forEach(i => otp += i.value);
+            hidden.value = otp;
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Bill</title></head>
+<body>
+
+<h2>🧾 Your Bill</h2>
+
+{% for item in items %}
+<p>{{ item.name }} - {{ item.qty }} x ₹{{ item.price }} = ₹{{ item.total }}</p>
+{% endfor %}
+
+<h3>Total: ₹{{ total }}</h3>
+
+<form action="/checkout" method="POST">
+    <button>Confirm Order</button>
+</form>
+
+</body>
+</html>
