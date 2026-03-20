@@ -1,6 +1,5 @@
-from flask import Flask, render_template, redirect, request, session
+from flask import Flask, render_template, request, redirect, session
 import sqlite3
-import random
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -13,7 +12,7 @@ vegetables = [
     {"name": "Carrot", "price": 40}
 ]
 
-# DATABASE INIT
+# DATABASE
 def init_db():
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
@@ -34,6 +33,44 @@ def init_db():
 
 init_db()
 
+
+# 🔐 LOGIN
+@app.route('/login', methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        phone = request.form['phone']
+
+        # ✅ VALIDATION
+        if len(phone) != 10 or not phone.isdigit():
+            return "❌ Enter valid 10-digit number"
+
+        otp = phone[-4:]  # 🔥 last 4 digits
+        session['otp'] = otp
+        session['phone'] = phone
+
+        print("OTP:", otp)
+
+        return redirect('/verify')
+
+    return render_template('login.html')
+
+
+# 🔐 VERIFY
+@app.route('/verify', methods=['GET','POST'])
+def verify():
+    if request.method == 'POST':
+        user_otp = request.form['otp']
+
+        if user_otp == session.get('otp'):
+            session['user'] = session.get('phone')
+            session['cart'] = {}
+            return redirect('/')
+        else:
+            return "❌ Wrong OTP"
+
+    return render_template('verify.html')
+
+
 # 🏠 HOME
 @app.route('/')
 def home():
@@ -48,34 +85,6 @@ def home():
                            cart=cart,
                            cart_count=cart_count)
 
-# 🔐 LOGIN
-@app.route('/login', methods=['GET','POST'])
-def login():
-    if request.method == "POST":
-        phone = request.form["phone"]
-        otp = str(random.randint(1000,9999))
-
-        session["otp"] = otp
-        session["temp_user"] = phone
-
-        print("OTP:", otp)
-
-        return redirect('/verify')
-
-    return render_template("login.html")
-
-# 🔐 VERIFY
-@app.route('/verify', methods=['GET','POST'])
-def verify():
-    if request.method == "POST":
-        if request.form["otp"] == session.get("otp"):
-            session["user"] = session.get("temp_user")
-            session["cart"] = {}
-            return redirect('/')
-        else:
-            return "Wrong OTP ❌"
-
-    return render_template("verify.html")
 
 # ➕ ADD
 @app.route('/add/<name>')
@@ -85,6 +94,7 @@ def add(name):
     session["cart"] = cart
     return redirect('/')
 
+
 # ➕ INCREASE
 @app.route('/increase/<name>')
 def increase(name):
@@ -92,6 +102,7 @@ def increase(name):
     cart[name] += 1
     session["cart"] = cart
     return redirect('/')
+
 
 # ➖ DECREASE
 @app.route('/decrease/<name>')
@@ -104,6 +115,7 @@ def decrease(name):
     session["cart"] = cart
     return redirect('/')
 
+
 # ❌ REMOVE
 @app.route('/remove/<name>')
 def remove(name):
@@ -112,6 +124,7 @@ def remove(name):
         del cart[name]
     session["cart"] = cart
     return redirect('/cart')
+
 
 # 🛒 CART
 @app.route('/cart')
@@ -134,12 +147,8 @@ def cart():
 
     return render_template("cart.html", items=items, total=total)
 
-# 💳 CHECKOUT → PAYMENT
-@app.route('/checkout')
-def checkout():
-    return redirect('/payment')
 
-# 💳 PAYMENT
+# 💳 PAYMENT (FAKE)
 @app.route('/payment')
 def payment():
     cart = session.get("cart", {})
@@ -152,7 +161,8 @@ def payment():
 
     return render_template("payment.html", total=total)
 
-# 🎉 SUCCESS (SAVE ORDER)
+
+# 🎉 SUCCESS
 @app.route('/success')
 def success():
     cart = session.get("cart", {})
@@ -176,7 +186,8 @@ def success():
 
     return render_template("success.html")
 
-# 📦 USER ORDERS
+
+# 📦 ORDERS
 @app.route('/orders')
 def orders():
     conn = sqlite3.connect("database.db")
@@ -192,21 +203,8 @@ def orders():
 
     return render_template("orders.html", orders=data)
 
-# 👤 PROFILE
-@app.route('/profile', methods=['GET','POST'])
-def profile():
-    if request.method == "POST":
-        session["name"] = request.form["name"]
-        session["address"] = request.form["address"]
 
-    return render_template(
-        "profile.html",
-        user=session.get("user"),
-        name=session.get("name", ""),
-        address=session.get("address", "")
-    )
-
-# 👑 ADMIN DASHBOARD
+# 👑 ADMIN
 @app.route('/admin', methods=['GET','POST'])
 def admin():
     conn = sqlite3.connect("database.db")
@@ -219,23 +217,13 @@ def admin():
         cur.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
         conn.commit()
 
-    # FETCH ORDERS
     cur.execute("SELECT id, username, item, quantity, total, status FROM orders")
-    orders = cur.fetchall()
-
-    # TOTAL ORDERS
-    total_orders = len(orders)
-
-    # TOTAL REVENUE
-    cur.execute("SELECT SUM(total) FROM orders")
-    total_revenue = cur.fetchone()[0] or 0
+    data = cur.fetchall()
 
     conn.close()
 
-    return render_template("admin.html",
-                           orders=orders,
-                           total_orders=total_orders,
-                           total_revenue=total_revenue)
+    return render_template("admin.html", orders=data)
+
 
 # 🚪 LOGOUT
 @app.route('/logout')
@@ -243,6 +231,6 @@ def logout():
     session.clear()
     return redirect('/login')
 
-# RUN
+
 if __name__ == '__main__':
     app.run(debug=True)
