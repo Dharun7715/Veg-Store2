@@ -8,67 +8,74 @@
         body {
             margin: 0;
             font-family: Arial;
-            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
         }
 
-        .box {
+        .card {
             background: white;
-            padding: 25px;
+            padding: 30px;
             border-radius: 20px;
-            width: 320px;
+            width: 300px;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #ddd;
+            margin: auto;
+            margin-bottom: 15px;
+            font-size: 30px;
+            line-height: 80px;
         }
 
         h2 {
-            margin-bottom: 10px;
-        }
-
-        input, textarea {
-            width: 90%;
-            padding: 10px;
             margin: 10px 0;
-            border-radius: 10px;
-            border: 1px solid #ccc;
         }
 
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 10px;
+        .phone {
+            color: gray;
+            margin-bottom: 20px;
         }
 
         a {
-            display: inline-block;
-            margin-top: 10px;
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background: #6c5ce7;
+            color: white;
             text-decoration: none;
-            color: black;
+            border-radius: 10px;
+        }
+
+        a:hover {
+            background: #4834d4;
         }
     </style>
 </head>
 
 <body>
 
-<div class="box">
+<div class="card">
 
-<h2>👤 Profile</h2>
+    <div class="avatar">👤</div>
 
-<p><b>Phone:</b> {{ user }}</p>
+    <h2>My Profile</h2>
 
-<form method="POST">
-    <input type="text" name="name" placeholder="Your Name" value="{{ name }}">
-    <textarea name="address" placeholder="Your Address">{{ address }}</textarea>
-    <button type="submit">Save</button>
-</form>
+    <div class="phone">
+        {{ user }}
+    </div>
 
-<a href="/">⬅ Back to Home</a>
+    <a href="/">🏠 Home</a>
+    <a href="/orders">📦 My Orders</a>
+    <a href="/cart">🛒 Cart</a>
+    <a href="/logout">🚪 Logout</a>
 
 </div>
 
