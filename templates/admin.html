@@ -8,7 +8,7 @@
 body {
     margin: 0;
     font-family: Arial;
-    background: #2c3e50;
+    background: linear-gradient(135deg, #2c3e50, #4ca1af);
     color: white;
 }
 
@@ -30,31 +30,59 @@ h2 {
 }
 
 .box {
-    background: #34495e;
-    padding: 10px;
-    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    padding: 12px;
+    border-radius: 12px;
     width: 48%;
     text-align: center;
 }
 
 /* card */
 .card {
-    background: #34495e;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.5s ease;
 }
 
 select, button {
-    padding: 5px;
-    margin-top: 5px;
+    padding: 6px;
+    margin-top: 6px;
+    border-radius: 6px;
+    border: none;
 }
 
+/* buttons */
+button {
+    background: #2ecc71;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #27ae60;
+}
+
+/* progress bar */
 .bar {
-    height: 10px;
-    background: green;
-    margin-top: 5px;
+    height: 8px;
+    margin-top: 6px;
     border-radius: 5px;
+    background: #ccc;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    background: #2ecc71;
+}
+
+/* animation */
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(20px);}
+    to {opacity: 1; transform: translateY(0);}
 }
 </style>
 </head>
@@ -83,15 +111,23 @@ select, button {
 <p>{{ item }} × {{ qty }}</p>
 <p>₹{{ total }}</p>
 
-<!-- simple bar -->
-<div class="bar" style="width: {{ total }}px;"></div>
+<!-- PROGRESS BAR -->
+<div class="bar">
+    <div class="fill" style="
+        width:
+        {% if status == 'Pending' %}30%
+        {% elif status == 'Out for Delivery' %}70%
+        {% else %}100%
+        {% endif %}
+    "></div>
+</div>
 
 <form method="POST">
 <input type="hidden" name="id" value="{{ id }}">
 
 <select name="status">
 <option {% if status=='Pending' %}selected{% endif %}>Pending</option>
-<option {% if status=='Shipped' %}selected{% endif %}>Shipped</option>
+<option {% if status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
 <option {% if status=='Delivered' %}selected{% endif %}>Delivered</option>
 </select>
 
@@ -101,7 +137,7 @@ select, button {
 </div>
 {% endfor %}
 
-<a href="/">⬅ Back</a>
+<a href="/" style="display:block;text-align:center;margin-top:15px;color:white;">⬅ Back</a>
 
 </div>
 
