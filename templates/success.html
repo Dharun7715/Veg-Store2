@@ -33,14 +33,18 @@
             animation: bounce 1s infinite;
         }
 
-        a {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
+        .btn {
+            display: block;
+            margin-top: 12px;
+            padding: 10px;
             background: green;
             color: white;
             border-radius: 10px;
             text-decoration: none;
+        }
+
+        .track {
+            background: orange;
         }
 
         @keyframes pop {
@@ -59,14 +63,25 @@
 
 <div class="box">
 
-<div class="tick">✅</div>
+    <div class="tick">✅</div>
 
-<h2>Order Placed Successfully!</h2>
-<p>Your items will be delivered soon 🚀</p>
+    <h2>Order Placed Successfully!</h2>
+    <p>Your items will be delivered soon 🚀</p>
 
-<a href="/">🏠 Back to Home</a>
+    <!-- TRACK BUTTON -->
+    <a href="/orders" class="btn track">📦 Track Order</a>
+
+    <!-- HOME BUTTON -->
+    <a href="/" class="btn">🏠 Back to Home</a>
 
 </div>
+
+<script>
+/* AUTO REDIRECT (optional 🔥) */
+setTimeout(() => {
+    window.location.href = "/orders";
+}, 5000); // 5 sec
+</script>
 
 </body>
 </html>
