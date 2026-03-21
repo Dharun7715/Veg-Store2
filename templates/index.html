@@ -53,7 +53,8 @@ h2 {
     color: white;
     padding: 6px 12px;
     border-radius: 8px;
-    text-decoration: none;
+    border: none;
+    cursor: pointer;
 }
 
 .qty {
@@ -71,7 +72,7 @@ h2 {
 <h2>🥦 Fresh Veg Store</h2>
 
 <div class="top-bar">
-    <a href="/cart" class="cart">🛒 {{ cart_count }}</a>
+    <a href="/cart" class="cart">🛒 <span id="cart-count">{{ cart_count }}</span></a>
     <a href="/orders" class="orders">📦 Orders</a>
     <a href="/profile" class="profile">👤 Profile</a>
     <a href="/logout" class="logout">Logout</a>
@@ -87,18 +88,36 @@ h2 {
 
 {% if qty > 0 %}
 <div class="qty">
-    <a href="/decrease/{{ veg.name }}" class="btn">➖</a>
-    <span>{{ qty }}</span>
-    <a href="/increase/{{ veg.name }}" class="btn">➕</a>
+    <button onclick="updateQty('decrease','{{ veg.name }}')" class="btn">➖</button>
+    <span id="qty-{{ veg.name }}">{{ qty }}</span>
+    <button onclick="updateQty('increase','{{ veg.name }}')" class="btn">➕</button>
 </div>
 {% else %}
-<a href="/add/{{ veg.name }}" class="btn">Add to Cart</a>
+<button onclick="addToCart('{{ veg.name }}')" class="btn">Add to Cart</button>
 {% endif %}
 
 </div>
 {% endfor %}
 
 </div>
+
+<script>
+function addToCart(name) {
+    fetch('/add/' + name)
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("cart-count").innerText = data.count;
+        location.reload(); // optional (remove if advanced UI venum)
+    });
+}
+
+function updateQty(action, name) {
+    fetch('/' + action + '/' + name)
+    .then(() => {
+        location.reload();
+    });
+}
+</script>
 
 </body>
 </html>
