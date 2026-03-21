@@ -22,6 +22,7 @@ h2 {
     color: white;
 }
 
+/* CARD */
 .card {
     background: white;
     padding: 15px;
@@ -39,6 +40,7 @@ h2 {
     color: #555;
 }
 
+/* STATUS BADGE */
 .status {
     padding: 5px 10px;
     border-radius: 20px;
@@ -52,6 +54,32 @@ h2 {
 .shipped { background: blue; }
 .delivered { background: green; }
 
+/* TRACK BAR */
+.track {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+}
+
+.step {
+    text-align: center;
+    flex: 1;
+}
+
+.circle {
+    width: 12px;
+    height: 12px;
+    margin: auto;
+    border-radius: 50%;
+    background: #ccc;
+}
+
+.active {
+    background: #2ecc71;
+}
+
+/* BACK BUTTON */
 .back {
     display: block;
     text-align: center;
@@ -63,13 +91,14 @@ h2 {
     color: black;
 }
 
+/* EMPTY */
 .empty {
     text-align: center;
     color: white;
     margin-top: 60px;
 }
 
-/* animation */
+/* ANIMATION */
 @keyframes fadeIn {
     from {opacity: 0; transform: translateY(20px);}
     to {opacity: 1; transform: translateY(0);}
@@ -91,13 +120,32 @@ h2 {
         <p class="price">Quantity: {{ qty }}</p>
         <p class="price">Total: ₹{{ total }}</p>
 
+        <!-- STATUS -->
         {% if status == 'Pending' %}
             <span class="status pending">🟡 Pending</span>
-        {% elif status == 'Shipped' %}
-            <span class="status shipped">🔵 Shipped</span>
+        {% elif status == 'Out for Delivery' %}
+            <span class="status shipped">🔵 Out for Delivery</span>
         {% elif status == 'Delivered' %}
             <span class="status delivered">🟢 Delivered</span>
         {% endif %}
+
+        <!-- TRACKING BAR -->
+        <div class="track">
+            <div class="step">
+                <div class="circle {% if status in ['Pending','Out for Delivery','Delivered'] %}active{% endif %}"></div>
+                <p>Order</p>
+            </div>
+
+            <div class="step">
+                <div class="circle {% if status in ['Out for Delivery','Delivered'] %}active{% endif %}"></div>
+                <p>Shipped</p>
+            </div>
+
+            <div class="step">
+                <div class="circle {% if status == 'Delivered' %}active{% endif %}"></div>
+                <p>Delivered</p>
+            </div>
+        </div>
 
     </div>
     {% endfor %}
