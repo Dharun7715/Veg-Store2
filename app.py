@@ -33,26 +33,22 @@ def init_db():
 
 init_db()
 
-
-# 🔐 LOGIN
+# LOGIN
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
         phone = request.form['phone']
 
         if len(phone) != 10 or not phone.isdigit():
-            return "❌ Enter valid 10-digit number"
+            return "❌ Enter valid number"
 
-        otp = phone[-4:]
-        session['otp'] = otp
+        session['otp'] = phone[-4:]
         session['phone'] = phone
-
         return redirect('/verify')
 
     return render_template('login.html')
 
-
-# 🔐 VERIFY
+# VERIFY
 @app.route('/verify', methods=['GET','POST'])
 def verify():
     if request.method == 'POST':
@@ -61,83 +57,58 @@ def verify():
             session['cart'] = {}
             return redirect('/')
         else:
-            return "❌ Wrong OTP"
+            return "Wrong OTP"
 
     return render_template('verify.html')
 
-
-# 🏠 HOME
+# HOME
 @app.route('/')
 def home():
     if "user" not in session:
         return redirect('/login')
 
     cart = session.get("cart", {})
-    cart_count = sum(cart.values())
+    return render_template(
+        "index.html",
+        vegetables=vegetables,
+        cart=cart,
+        cart_count=sum(cart.values())
+    )
 
-    return render_template("index.html",
-                           vegetables=vegetables,
-                           cart=cart,
-                           cart_count=cart_count)
-
-
-# 👤 PROFILE
+# PROFILE
 @app.route('/profile')
 def profile():
-    if "user" not in session:
-        return redirect('/login')
-
     return render_template("profile.html", user=session['user'])
 
-
-# ➕ ADD (AJAX)
+# ADD (AJAX)
 @app.route('/add/<name>')
 def add(name):
     cart = session.get("cart", {})
     cart[name] = cart.get(name, 0) + 1
     session["cart"] = cart
+    return jsonify({"count": sum(cart.values())})
 
-    return jsonify({
-        "status": "success",
-        "count": sum(cart.values())
-    })
-
-
-# ➕ INCREASE
+# INCREASE
 @app.route('/increase/<name>')
 def increase(name):
     cart = session.get("cart", {})
-    cart[name] = cart.get(name, 0) + 1
+    cart[name] += 1
     session["cart"] = cart
     return jsonify({"count": sum(cart.values())})
 
-
-# ➖ DECREASE
+# DECREASE
 @app.route('/decrease/<name>')
 def decrease(name):
     cart = session.get("cart", {})
-
     if name in cart:
         if cart[name] > 1:
             cart[name] -= 1
         else:
             del cart[name]
-
     session["cart"] = cart
     return jsonify({"count": sum(cart.values())})
 
-
-# ❌ REMOVE
-@app.route('/remove/<name>')
-def remove(name):
-    cart = session.get("cart", {})
-    if name in cart:
-        del cart[name]
-    session["cart"] = cart
-    return redirect('/cart')
-
-
-# 🛒 CART
+# CART
 @app.route('/cart')
 def cart():
     cart = session.get("cart", {})
@@ -149,23 +120,16 @@ def cart():
             if veg["name"] == name:
                 t = veg["price"] * qty
                 total += t
-                items.append({
-                    "name": name,
-                    "price": veg["price"],
-                    "qty": qty,
-                    "total": t
-                })
+                items.append({"name": name, "qty": qty, "total": t})
 
     return render_template("cart.html", items=items, total=total)
 
-
-# 🔥 CHECKOUT FIX
+# CHECKOUT
 @app.route('/checkout')
 def checkout():
     return redirect('/payment')
 
-
-# 💳 PAYMENT
+# PAYMENT
 @app.route('/payment')
 def payment():
     cart = session.get("cart", {})
@@ -178,8 +142,7 @@ def payment():
 
     return render_template("payment.html", total=total)
 
-
-# 🎉 SUCCESS
+# SUCCESS (SAVE ORDER)
 @app.route('/success')
 def success():
     cart = session.get("cart", {})
@@ -200,11 +163,9 @@ def success():
     conn.close()
 
     session["cart"] = {}
-
     return render_template("success.html")
 
-
-# 📦 ORDERS
+# ORDERS (USER VIEW)
 @app.route('/orders')
 def orders():
     conn = sqlite3.connect("database.db")
@@ -217,38 +178,48 @@ def orders():
     data = cur.fetchall()
 
     conn.close()
-
     return render_template("orders.html", orders=data)
 
-
-# 👑 ADMIN
+# 👑 ADMIN DASHBOARD
 @app.route('/admin', methods=['GET','POST'])
 def admin():
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
 
+    # UPDATE STATUS
     if request.method == "POST":
         order_id = request.form["id"]
         status = request.form["status"]
-
         cur.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
         conn.commit()
 
+    # FETCH ORDERS
     cur.execute("SELECT id, username, item, quantity, total, status FROM orders")
-    data = cur.fetchall()
+    orders = cur.fetchall()
+
+    # STATS
+    cur.execute("SELECT COUNT(*) FROM orders")
+    total_orders = cur.fetchone()[0]
+
+    cur.execute("SELECT SUM(total) FROM orders")
+    total_revenue = cur.fetchone()[0]
+    if total_revenue is None:
+        total_revenue = 0
 
     conn.close()
 
-    return render_template("admin.html", orders=data)
+    return render_template(
+        "admin.html",
+        orders=orders,
+        total_orders=total_orders,
+        total_revenue=total_revenue
+    )
 
-
-# 🚪 LOGOUT
+# LOGOUT
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
 
-
-# RUN
 if __name__ == '__main__':
     app.run(debug=True)
