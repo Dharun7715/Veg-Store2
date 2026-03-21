@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
 
 app = Flask(__name__)
@@ -47,8 +47,6 @@ def login():
         session['otp'] = otp
         session['phone'] = phone
 
-        print("OTP:", otp)
-
         return redirect('/verify')
 
     return render_template('login.html')
@@ -58,10 +56,8 @@ def login():
 @app.route('/verify', methods=['GET','POST'])
 def verify():
     if request.method == 'POST':
-        user_otp = request.form['otp']
-
-        if user_otp == session.get('otp'):
-            session['user'] = session.get('phone')
+        if request.form['otp'] == session.get('otp'):
+            session['user'] = session['phone']
             session['cart'] = {}
             return redirect('/')
         else:
@@ -94,34 +90,41 @@ def profile():
     return render_template("profile.html", user=session['user'])
 
 
-# ➕ ADD
+# ➕ ADD (AJAX)
 @app.route('/add/<name>')
 def add(name):
     cart = session.get("cart", {})
     cart[name] = cart.get(name, 0) + 1
     session["cart"] = cart
-    return redirect('/')
+
+    return jsonify({
+        "status": "success",
+        "count": sum(cart.values())
+    })
 
 
 # ➕ INCREASE
 @app.route('/increase/<name>')
 def increase(name):
     cart = session.get("cart", {})
-    cart[name] += 1
+    cart[name] = cart.get(name, 0) + 1
     session["cart"] = cart
-    return redirect('/')
+    return jsonify({"count": sum(cart.values())})
 
 
 # ➖ DECREASE
 @app.route('/decrease/<name>')
 def decrease(name):
     cart = session.get("cart", {})
-    if cart[name] > 1:
-        cart[name] -= 1
-    else:
-        del cart[name]
+
+    if name in cart:
+        if cart[name] > 1:
+            cart[name] -= 1
+        else:
+            del cart[name]
+
     session["cart"] = cart
-    return redirect('/')
+    return jsonify({"count": sum(cart.values())})
 
 
 # ❌ REMOVE
@@ -246,5 +249,6 @@ def logout():
     return redirect('/login')
 
 
+# RUN
 if __name__ == '__main__':
     app.run(debug=True)
