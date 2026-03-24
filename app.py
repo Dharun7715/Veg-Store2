@@ -18,7 +18,7 @@ vegetables = [
     {"name": "Cucumber", "price": 50, "mrp": 70}
 ]
 
-# 🗄 DB
+# 🗄 DATABASE
 def init_db():
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
@@ -94,7 +94,7 @@ def add(name):
     cart = session.get("cart", {})
     cart[name] = cart.get(name, 0) + 1
     session["cart"] = cart
-    session["msg"] = f"{name} added"
+    session["msg"] = f"{name} added to cart"
     return redirect('/')
 
 # ➕ INCREASE
@@ -155,11 +155,11 @@ def payment():
 
     if total >= 300:
         discount += 50
-        msg += "₹50 discount "
+        msg += "🎉 ₹50 discount "
 
     if count == 0:
         discount += 100
-        msg += "+ ₹100 first order"
+        msg += "+ 🎟️ ₹100 first order"
 
     final_total = max(total - discount, 0)
 
@@ -203,11 +203,20 @@ def orders():
         (session["user"],)
     )
     data = cur.fetchall()
+
     conn.close()
 
     return render_template("orders.html", orders=data)
 
-# 👑 ADMIN DASHBOARD
+# 👤 PROFILE
+@app.route('/profile')
+def profile():
+    if "user" not in session:
+        return redirect('/login')
+
+    return render_template("profile.html", user=session["user"])
+
+# 👑 ADMIN
 @app.route('/admin', methods=['GET','POST'])
 def admin():
     conn = sqlite3.connect("database.db")
