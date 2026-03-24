@@ -22,25 +22,13 @@ h2 {
     color: white;
 }
 
-/* CARD */
 .card {
     background: white;
     padding: 15px;
     margin: 12px 0;
     border-radius: 15px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    animation: fadeIn 0.5s ease;
 }
 
-.card h3 {
-    margin: 0;
-}
-
-.price {
-    color: #555;
-}
-
-/* STATUS BADGE */
 .status {
     padding: 5px 10px;
     border-radius: 20px;
@@ -54,32 +42,24 @@ h2 {
 .shipped { background: blue; }
 .delivered { background: green; }
 
-/* TRACK BAR */
-.track {
+.progress {
     margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
+    height: 8px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
-.step {
-    text-align: center;
-    flex: 1;
+.bar {
+    height: 100%;
+    background: green;
 }
 
-.circle {
-    width: 12px;
-    height: 12px;
-    margin: auto;
-    border-radius: 50%;
-    background: #ccc;
-}
+/* progress levels */
+.p1 { width: 30%; }
+.p2 { width: 70%; }
+.p3 { width: 100%; }
 
-.active {
-    background: #2ecc71;
-}
-
-/* BACK BUTTON */
 .back {
     display: block;
     text-align: center;
@@ -89,19 +69,6 @@ h2 {
     border-radius: 10px;
     text-decoration: none;
     color: black;
-}
-
-/* EMPTY */
-.empty {
-    text-align: center;
-    color: white;
-    margin-top: 60px;
-}
-
-/* ANIMATION */
-@keyframes fadeIn {
-    from {opacity: 0; transform: translateY(20px);}
-    to {opacity: 1; transform: translateY(0);}
 }
 </style>
 </head>
@@ -113,46 +80,30 @@ h2 {
 <h2>📦 My Orders</h2>
 
 {% if orders %}
-    {% for item, qty, total, status in orders %}
-    <div class="card">
+{% for item, qty, total, status in orders %}
+<div class="card">
 
-        <h3>{{ item }}</h3>
-        <p class="price">Quantity: {{ qty }}</p>
-        <p class="price">Total: ₹{{ total }}</p>
+<h3>{{ item }}</h3>
+<p>Qty: {{ qty }}</p>
+<p>Total: ₹{{ total }}</p>
 
-        <!-- STATUS -->
-        {% if status == 'Pending' %}
-            <span class="status pending">🟡 Pending</span>
-        {% elif status == 'Out for Delivery' %}
-            <span class="status shipped">🔵 Out for Delivery</span>
-        {% elif status == 'Delivered' %}
-            <span class="status delivered">🟢 Delivered</span>
-        {% endif %}
+{% if status == 'Pending' %}
+<span class="status pending">🟡 Preparing</span>
+<div class="progress"><div class="bar p1"></div></div>
 
-        <!-- TRACKING BAR -->
-        <div class="track">
-            <div class="step">
-                <div class="circle {% if status in ['Pending','Out for Delivery','Delivered'] %}active{% endif %}"></div>
-                <p>Order</p>
-            </div>
+{% elif status == 'Shipped' %}
+<span class="status shipped">🔵 Out for Delivery</span>
+<div class="progress"><div class="bar p2"></div></div>
 
-            <div class="step">
-                <div class="circle {% if status in ['Out for Delivery','Delivered'] %}active{% endif %}"></div>
-                <p>Shipped</p>
-            </div>
+{% elif status == 'Delivered' %}
+<span class="status delivered">🟢 Delivered</span>
+<div class="progress"><div class="bar p3"></div></div>
+{% endif %}
 
-            <div class="step">
-                <div class="circle {% if status == 'Delivered' %}active{% endif %}"></div>
-                <p>Delivered</p>
-            </div>
-        </div>
-
-    </div>
-    {% endfor %}
+</div>
+{% endfor %}
 {% else %}
-    <div class="empty">
-        <h3>No orders yet 😢</h3>
-    </div>
+<p style="color:white; text-align:center;">No orders yet 😢</p>
 {% endif %}
 
 <a href="/" class="back">⬅ Back to Home</a>
