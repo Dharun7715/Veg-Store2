@@ -8,15 +8,14 @@ app.secret_key = "secret123"
 vegetables = [
     {"name": "Tomato", "price": 20},
     {"name": "Potato", "price": 30},
-    {"name": "Onion", "price": 50},
-    {"name": "Carrot", "price": 40},
+    {"name": "Onion", "price": 25},
+    {"name": "Carrot", "price": 40}
     {"name": "Beans", "price": 40},
     {"name": "Beetroot", "price": 50},
     {"name": "Cabbage", "price": 60},
     {"name": "Raw Mango", "price": 120},
     {"name": "Lemon", "price": 150},
     {"name": "Cucumber", "price": 50}
-
 ]
 
 # DATABASE
@@ -40,7 +39,7 @@ def init_db():
 
 init_db()
 
-# LOGIN
+# 🔐 USER LOGIN
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
@@ -87,7 +86,7 @@ def home():
 def profile():
     return render_template("profile.html", user=session['user'])
 
-# ADD (AJAX)
+# ADD
 @app.route('/add/<name>')
 def add(name):
     cart = session.get("cart", {})
@@ -149,7 +148,7 @@ def payment():
 
     return render_template("payment.html", total=total)
 
-# SUCCESS (SAVE ORDER)
+# SUCCESS
 @app.route('/success')
 def success():
     cart = session.get("cart", {})
@@ -172,7 +171,7 @@ def success():
     session["cart"] = {}
     return render_template("success.html")
 
-# ORDERS (USER VIEW)
+# ORDERS
 @app.route('/orders')
 def orders():
     conn = sqlite3.connect("database.db")
@@ -187,40 +186,53 @@ def orders():
     conn.close()
     return render_template("orders.html", orders=data)
 
+# 🔐 ADMIN LOGIN
+@app.route('/admin-login', methods=['GET','POST'])
+def admin_login():
+    if request.method == 'POST':
+        if request.form['username'] == "admin" and request.form['password'] == "1234":
+            session['admin'] = True
+            return redirect('/admin')
+        else:
+            return "❌ Wrong credentials"
+
+    return render_template("admin_login.html")
+
 # 👑 ADMIN DASHBOARD
 @app.route('/admin', methods=['GET','POST'])
 def admin():
+    if not session.get("admin"):
+        return redirect('/admin-login')
+
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
 
-    # UPDATE STATUS
     if request.method == "POST":
-        order_id = request.form["id"]
-        status = request.form["status"]
-        cur.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
+        cur.execute("UPDATE orders SET status=? WHERE id=?",
+                    (request.form["status"], request.form["id"]))
         conn.commit()
 
-    # FETCH ORDERS
     cur.execute("SELECT id, username, item, quantity, total, status FROM orders")
     orders = cur.fetchall()
 
-    # STATS
     cur.execute("SELECT COUNT(*) FROM orders")
     total_orders = cur.fetchone()[0]
 
     cur.execute("SELECT SUM(total) FROM orders")
-    total_revenue = cur.fetchone()[0]
-    if total_revenue is None:
-        total_revenue = 0
+    total_revenue = cur.fetchone()[0] or 0
 
     conn.close()
 
-    return render_template(
-        "admin.html",
-        orders=orders,
-        total_orders=total_orders,
-        total_revenue=total_revenue
-    )
+    return render_template("admin.html",
+                           orders=orders,
+                           total_orders=total_orders,
+                           total_revenue=total_revenue)
+
+# ADMIN LOGOUT
+@app.route('/admin-logout')
+def admin_logout():
+    session.pop("admin", None)
+    return redirect('/admin-login')
 
 # LOGOUT
 @app.route('/logout')
