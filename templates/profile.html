@@ -1,81 +1,95 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Profile</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+}
 
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            width: 300px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+}
 
-        .avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #ddd;
-            margin: auto;
-            margin-bottom: 15px;
-            font-size: 30px;
-            line-height: 80px;
-        }
+/* CARD */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    animation: fadeIn 0.5s ease;
+}
 
-        h2 {
-            margin: 10px 0;
-        }
+/* TITLE */
+h2 {
+    color: white;
+}
 
-        .phone {
-            color: gray;
-            margin-bottom: 20px;
-        }
+/* TEXT */
+.info {
+    font-size: 16px;
+    margin: 10px 0;
+}
 
-        a {
-            display: block;
-            margin: 10px 0;
-            padding: 10px;
-            background: #6c5ce7;
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-        }
+.phone {
+    font-size: 18px;
+    font-weight: bold;
+    color: #27ae60;
+}
 
-        a:hover {
-            background: #4834d4;
-        }
-    </style>
+/* BUTTONS */
+.btn {
+    display: block;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+}
+
+.home { background: green; }
+.orders { background: orange; }
+.logout { background: red; }
+
+/* ANIMATION */
+@keyframes fadeIn {
+    from {opacity:0; transform:translateY(20px);}
+    to {opacity:1; transform:translateY(0);}
+}
+</style>
 </head>
 
 <body>
 
+<div class="container">
+
+<h2>👤 My Profile</h2>
+
 <div class="card">
 
-    <div class="avatar">👤</div>
+<p class="info">📱 Phone Number</p>
+<p class="phone">{{ user }}</p>
 
-    <h2>My Profile</h2>
+<p class="info">Welcome back to Veg Store 🥦</p>
 
-    <div class="phone">
-        {{ user }}
-    </div>
+<hr>
 
-    <a href="/">🏠 Home</a>
-    <a href="/orders">📦 My Orders</a>
-    <a href="/cart">🛒 Cart</a>
-    <a href="/logout">🚪 Logout</a>
+<!-- EXTRA DETAILS -->
+<p class="info">🛒 Items in Cart: {{ session.get('cart')|length }}</p>
+
+</div>
+
+<!-- ACTION BUTTONS -->
+<a href="/" class="btn home">🏠 Home</a>
+<a href="/orders" class="btn orders">📦 My Orders</a>
+<a href="/logout" class="btn logout">🚪 Logout</a>
 
 </div>
 
