@@ -4,6 +4,9 @@ import sqlite3
 app = Flask(__name__)
 app.secret_key = "secret123"
 
+# 🔒 ADMIN NUMBER (change pannalam)
+ADMIN_PHONE = "8838145515"
+
 # 🥦 PRODUCTS
 vegetables = [
     {"name": "Tomato", "price": 20, "mrp": 30},
@@ -86,7 +89,8 @@ def home():
                            vegetables=filtered,
                            cart=cart,
                            cart_count=sum(cart.values()),
-                           search=search)
+                           search=search,
+                           is_admin=(session.get("user") == ADMIN_PHONE))
 
 # ➕ ADD
 @app.route('/add/<name>')
@@ -211,14 +215,14 @@ def orders():
 # 👤 PROFILE
 @app.route('/profile')
 def profile():
-    if "user" not in session:
-        return redirect('/login')
+    return render_template("profile.html", user=session.get("user"))
 
-    return render_template("profile.html", user=session["user"])
-
-# 👑 ADMIN
+# 👑 ADMIN (SECURED)
 @app.route('/admin', methods=['GET','POST'])
 def admin():
+    if session.get("user") != ADMIN_PHONE:
+        return "❌ Access Denied"
+
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
 
