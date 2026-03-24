@@ -1,59 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Verify OTP</title>
-    <style>
-        body {
-            background: linear-gradient(to right, #56ab2f, #a8e063);
-            font-family: Arial;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<title>Verify OTP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        .box {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
-            width: 300px;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
 
-        .hint {
-            font-size: 14px;
-            color: gray;
-        }
+/* card */
+.box {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 350px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    animation: pop 0.4s ease;
+}
 
-        input {
-            width: 80%;
-            padding: 10px;
-            text-align: center;
-        }
+h2 {
+    margin-bottom: 10px;
+}
 
-        button {
-            margin-top: 10px;
-            padding: 10px;
-            background: green;
-            color: white;
-            border: none;
-        }
-    </style>
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 3px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+button:hover {
+    background: #27ae60;
+}
+
+/* animation */
+@keyframes pop {
+    from {transform: scale(0.9); opacity: 0;}
+    to {transform: scale(1); opacity: 1;}
+}
+</style>
 </head>
 
 <body>
 
 <div class="box">
-    <h2>🔐 Verify OTP</h2>
 
-    <p>OTP sent to {{ session['phone'] }}</p>
-    <p class="hint">Enter your last 4 digits as OTP</p>
+<h2>🔐 Verify OTP</h2>
 
-    <form method="POST">
-        <input type="text" name="otp" maxlength="4" required>
-        <br>
-        <button type="submit">Verify</button>
-    </form>
+<p>Enter last 4 digits of your mobile number</p>
+
+<form method="POST">
+    <input type="text" name="otp" maxlength="4" placeholder="____" required>
+    <button>Verify</button>
+</form>
+
 </div>
 
 </body>
