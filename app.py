@@ -8,8 +8,15 @@ app.secret_key = "secret123"
 vegetables = [
     {"name": "Tomato", "price": 20},
     {"name": "Potato", "price": 30},
-    {"name": "Onion", "price": 25},
-    {"name": "Carrot", "price": 40}
+    {"name": "Onion", "price": 50},
+    {"name": "Carrot", "price": 40},
+    {"name": "Beans", "price": 40},
+    {"name": "Beetroot", "price": 50},
+    {"name": "Cabbage", "price": 60},
+    {"name": "Raw Mango", "price": 120},
+    {"name": "Lemon", "price": 150},
+    {"name": "Cucumber", "price": 50}
+
 ]
 
 # DATABASE
