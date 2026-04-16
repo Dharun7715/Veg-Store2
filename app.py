@@ -69,15 +69,15 @@ def add(name):
     session["msg"]=f"{name} added"
     return redirect('/')
 
-# INCREASE
+# INCREASE (FIXED)
 @app.route('/increase/<name>')
 def increase(name):
     cart = session.get("cart",{})
     cart[name]+=1
     session["cart"]=cart
-    return redirect('/cart')
+    return redirect('/')   # ✅ FIX
 
-# DECREASE
+# DECREASE (FIXED)
 @app.route('/decrease/<name>')
 def decrease(name):
     cart = session.get("cart",{})
@@ -86,7 +86,7 @@ def decrease(name):
     else:
         del cart[name]
     session["cart"]=cart
-    return redirect('/cart')
+    return redirect('/')   # ✅ FIX
 
 # REMOVE
 @app.route('/remove/<name>')
@@ -110,7 +110,7 @@ def cart():
                 items.append({"name":name,"qty":qty,"price":v["price"],"total":t})
     return render_template("cart.html",items=items,total=total)
 
-# PAYMENT (DOUBLE ROUTE FIX 🔥)
+# PAYMENT (DOUBLE ROUTE)
 @app.route('/payment')
 @app.route('/checkout')
 def payment():
@@ -122,10 +122,20 @@ def payment():
             if v["name"]==name:
                 total+=v["price"]*qty
 
-    # discount
+    # discount logic
     discount=0
     if total>=300:
         discount+=50
+
+    # first order bonus
+    conn=sqlite3.connect("database.db")
+    cur=conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM orders WHERE username=?", (session.get("user"),))
+    count=cur.fetchone()[0]
+    conn.close()
+
+    if count==0:
+        discount+=100
 
     final_total=max(total-discount,0)
 
@@ -135,10 +145,11 @@ def payment():
         final_total=final_total
     )
 
-# SUCCESS
+# SUCCESS (ORDER SAVE FIXED)
 @app.route('/success')
 def success():
     cart=session.get("cart",{})
+
     conn=sqlite3.connect("database.db")
     cur=conn.cursor()
 
