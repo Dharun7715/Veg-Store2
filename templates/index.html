@@ -17,79 +17,82 @@ body {
     text-align: center;
     padding: 15px;
     font-size: 22px;
-    font-weight: bold;
     color: white;
+    font-weight: bold;
 }
 
-/* SEARCH */
-.search-box {
-    text-align: center;
-}
-
-.search-box input {
-    width: 80%;
-    padding: 10px;
-    border-radius: 20px;
-    border: none;
-}
-
-/* TOP BUTTONS */
+/* TOP BAR */
 .top-bar {
     display: flex;
     justify-content: center;
-    gap: 10px;
     margin: 10px;
 }
 
-.top-btn {
-    padding: 8px 12px;
-    border-radius: 15px;
+.cart {
+    background: green;
+    padding: 6px 12px;
+    border-radius: 12px;
     color: white;
-    text-decoration: none;
 }
-
-.cart { background: green; }
-.orders { background: orange; }
-.profile { background: purple; }
-.logout { background: red; }
 
 /* LOCATION */
 .location-box {
     text-align: center;
     color: white;
-    margin: 10px;
 }
 
-.loc-btn {
-    background: #2ecc71;
+.loc-btn, .map-btn {
     padding: 8px 12px;
     border-radius: 10px;
     border: none;
     color: white;
+    margin: 5px;
 }
 
-.map-btn {
-    background: #3498db;
-    padding: 8px 12px;
-    border-radius: 10px;
-    color: white;
-    text-decoration: none;
+.loc-btn { background: #2ecc71; }
+.map-btn { background: #3498db; text-decoration: none; }
+
+/* GRID */
+.container {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 10px;
 }
 
-/* PRODUCT CARD */
+@media (min-width: 600px) {
+    .container { grid-template-columns: repeat(2,1fr); }
+}
+
+@media (min-width: 900px) {
+    .container { grid-template-columns: repeat(3,1fr); }
+}
+
+/* CARD */
 .card {
     background: white;
-    margin: 15px;
+    margin: 10px;
     padding: 15px;
     border-radius: 15px;
+    text-align: center;
+    position: relative;
 }
 
+/* SALE */
 .sale {
-    float: right;
+    position: absolute;
+    top: 10px;
+    right: 10px;
     background: red;
     color: white;
-    padding: 5px 10px;
+    padding: 4px 10px;
     border-radius: 10px;
+    font-size: 12px;
+}
+
+/* PRICE */
+.old {
+    text-decoration: line-through;
+    color: gray;
 }
 
 .price {
@@ -97,19 +100,29 @@ body {
     font-weight: bold;
 }
 
-.old {
-    text-decoration: line-through;
-    color: gray;
+.off {
+    color: red;
+    font-size: 12px;
 }
 
+/* BUTTON */
 .btn {
     background: green;
-    padding: 8px 12px;
+    padding: 6px 12px;
     border-radius: 10px;
     color: white;
-    text-decoration: none;
-    display: inline-block;
-    margin-top: 8px;
+    border: none;
+}
+
+.qty {
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 5px 10px;
 }
 
 </style>
@@ -117,37 +130,22 @@ body {
 
 <body>
 
-<div class="header">🥦 Fresh Veg Store</div>
+<div class="header">🥦 GreenBasket</div>
 
-<!-- SEARCH -->
-<div class="search-box">
-<form method="GET">
-<input type="text" name="search" placeholder="Search vegetables...">
-</form>
-</div>
-
-<!-- TOP BUTTONS -->
 <div class="top-bar">
-    <a href="/cart" class="top-btn cart">🛒 {{ cart_count }}</a>
-    <a href="/orders" class="top-btn orders">Orders</a>
-    <a href="/profile" class="top-btn profile">Profile</a>
-    <a href="/logout" class="top-btn logout">Logout</a>
+    <div class="cart">🛒 <span id="cartCount">{{ cart_count }}</span></div>
 </div>
 
 <!-- LOCATION -->
 <div class="location-box">
-<p id="locationText">📍 Select your delivery location</p>
+<p id="locationText">📍 Select location</p>
 
-<button onclick="getLocation()" class="loc-btn">
-📍 Use Current Location
-</button>
-
-<a href="/address" class="map-btn">
-🗺️ Map
-</a>
+<button onclick="getLocation()" class="loc-btn">Use Location</button>
+<a href="/address" class="map-btn">Map</a>
 </div>
 
 <!-- PRODUCTS -->
+<div class="container">
 {% for v in vegetables %}
 <div class="card">
 
@@ -158,32 +156,83 @@ body {
 <p>
 <span class="old">₹{{ v.price + 10 }}</span>
 <span class="price"> ₹{{ v.price }}</span>
+<span class="off">
+({{ ((v.price+10 - v.price)*100 // (v.price+10)) }}% OFF)
+</span>
 </p>
 
-<a href="/add/{{ v.name }}" class="btn">Add to Cart</a>
+<div id="controls-{{ v.name }}">
+{% if cart.get(v.name) %}
+    <button onclick="decrease('{{ v.name }}')">-</button>
+    <span class="qty">{{ cart[v.name] }}</span>
+    <button onclick="increase('{{ v.name }}')">+</button>
+{% else %}
+    <button onclick="addItem('{{ v.name }}')" class="btn">Add</button>
+{% endif %}
+</div>
 
 </div>
 {% endfor %}
+</div>
 
-<!-- JS -->
 <script>
+
+// LOCATION
 function getLocation(){
-    navigator.geolocation.getCurrentPosition(function(position){
-
-        var lat = position.coords.latitude;
-        var lng = position.coords.longitude;
-
-        document.getElementById("locationText").innerHTML = "⏳ Getting address...";
+    navigator.geolocation.getCurrentPosition(function(pos){
+        let lat = pos.coords.latitude;
+        let lng = pos.coords.longitude;
 
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
         .then(res => res.json())
-        .then(data => {
-            document.getElementById("locationText").innerHTML =
-                "📍 " + data.display_name;
+        .then(data=>{
+            document.getElementById("locationText").innerHTML = "📍 " + data.display_name;
         });
-
     });
 }
+
+// CART
+function addItem(name){
+    fetch('/add/'+name)
+    .then(res=>res.json())
+    .then(data=>{
+        updateUI(name,data.qty,data.cart_count);
+    });
+}
+
+function increase(name){
+    fetch('/increase/'+name)
+    .then(res=>res.json())
+    .then(data=>{
+        updateUI(name,data.qty,data.cart_count);
+    });
+}
+
+function decrease(name){
+    fetch('/decrease/'+name)
+    .then(res=>res.json())
+    .then(data=>{
+        updateUI(name,data.qty,data.cart_count);
+    });
+}
+
+function updateUI(name,qty,total){
+
+    document.getElementById("cartCount").innerText = total;
+
+    let div = document.getElementById("controls-"+name);
+
+    if(qty==0){
+        div.innerHTML = `<button onclick="addItem('${name}')" class="btn">Add</button>`;
+    } else {
+        div.innerHTML = `
+        <button onclick="decrease('${name}')">-</button>
+        <span class="qty">${qty}</span>
+        <button onclick="increase('${name}')">+</button>
+        `;
+    }
+}
+
 </script>
 
 </body>
