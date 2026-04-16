@@ -24,12 +24,13 @@ h2 {
 
 /* MAP */
 #map {
-    height: 70vh;
-    border-radius: 10px;
+    height: 65vh;
     margin: 10px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
 }
 
-/* INFO BOX */
+/* INFO */
 .info {
     text-align: center;
     font-size: 14px;
@@ -43,14 +44,23 @@ h2 {
     margin: 10px auto;
     padding: 14px;
     border-radius: 15px;
-    background: linear-gradient(90deg,#00c853,#2ecc71);
-    color: white;
     text-align: center;
-    text-decoration: none;
-    border: none;
     font-weight: bold;
+    border: none;
 }
 
+/* COLORS */
+.green {
+    background: linear-gradient(90deg,#00c853,#2ecc71);
+    color: white;
+}
+
+.blue {
+    background: linear-gradient(90deg,#2196f3,#00bcd4);
+    color: white;
+}
+
+/* BACK */
 .back {
     text-align: center;
     display: block;
@@ -68,23 +78,27 @@ h2 {
 
 <div id="map"></div>
 
-<p class="info">Tap anywhere on map to select your address</p>
+<p class="info">Tap map OR use current location</p>
 
-<form method="POST">
+<form method="POST" onsubmit="return validateLocation()">
     <input type="hidden" name="lat" id="lat">
     <input type="hidden" name="lng" id="lng">
 
-    <button class="btn">✅ Confirm Address</button>
+    <button class="btn green">✅ Confirm Address</button>
 </form>
 
-<a href="/cart" class="back">⬅ Back to Cart</a>
+<button class="btn blue" onclick="getLocation()">
+📍 Use Current Location
+</button>
+
+<a href="/" class="back">⬅ Back</a>
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
 
-// Default map (Tharamangalam)
+// Default → Tharamangalam
 var map = L.map('map').setView([11.6943, 77.9680], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -93,32 +107,63 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 var marker;
 
-// Click to select location
+// 📍 Click selection
 map.on('click', function(e){
+    setMarker(e.latlng.lat, e.latlng.lng);
+});
 
+// 📍 Set marker function
+function setMarker(lat, lng){
     if(marker){
         map.removeLayer(marker);
     }
-
-    marker = L.marker(e.latlng).addTo(map);
-
-    document.getElementById("lat").value = e.latlng.lat;
-    document.getElementById("lng").value = e.latlng.lng;
-
-});
-
-// OPTIONAL: auto current location
-navigator.geolocation.getCurrentPosition(function(position){
-    var lat = position.coords.latitude;
-    var lng = position.coords.longitude;
-
-    map.setView([lat, lng], 15);
 
     marker = L.marker([lat, lng]).addTo(map);
 
     document.getElementById("lat").value = lat;
     document.getElementById("lng").value = lng;
-});
+}
+
+// 📍 Current location button
+function getLocation(){
+    navigator.geolocation.getCurrentPosition(function(position){
+
+        var lat = position.coords.latitude;
+        var lng = position.coords.longitude;
+
+        setMarker(lat, lng);
+        map.setView([lat, lng], 15);
+
+    }, function(){
+        alert("❌ Location access denied");
+    });
+}
+
+// 📍 Auto detect on load (best UX 🔥)
+window.onload = function(){
+    navigator.geolocation.getCurrentPosition(function(position){
+
+        var lat = position.coords.latitude;
+        var lng = position.coords.longitude;
+
+        setMarker(lat, lng);
+        map.setView([lat, lng], 15);
+
+    });
+};
+
+// ✅ Validation
+function validateLocation(){
+    var lat = document.getElementById("lat").value;
+    var lng = document.getElementById("lng").value;
+
+    if(!lat || !lng){
+        alert("⚠️ Please select a location first");
+        return false;
+    }
+
+    return true;
+}
 
 </script>
 
