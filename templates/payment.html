@@ -1,113 +1,112 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Payment</title>
+<title>Checkout</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
-    margin: 0;
-    font-family: Arial;
-    background: linear-gradient(135deg, #11998e, #38ef7d);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    margin:0;
+    font-family:Arial;
+    background:linear-gradient(135deg,#141e30,#243b55);
+    color:white;
 }
 
+.container {
+    max-width:420px;
+    margin:auto;
+    padding:15px;
+}
+
+h2 {
+    text-align:center;
+}
+
+/* CARD */
 .card {
-    background: white;
-    padding: 25px;
-    border-radius: 20px;
-    width: 320px;
-    text-align: center;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    background:rgba(255,255,255,0.12);
+    backdrop-filter:blur(12px);
+    padding:20px;
+    border-radius:18px;
+    margin-top:15px;
 }
 
-.price-box {
-    background: #f8f8f8;
-    padding: 15px;
-    border-radius: 15px;
-    margin: 15px 0;
+/* ROW */
+.row {
+    display:flex;
+    justify-content:space-between;
+    margin:10px 0;
 }
 
+/* FINAL */
 .final {
-    font-size: 20px;
-    font-weight: bold;
-    color: #27ae60;
+    font-size:20px;
+    font-weight:bold;
+    color:#2ecc71;
 }
 
-button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    cursor: pointer;
+/* BUTTON */
+.btn {
+    display:block;
+    width:100%;
+    padding:14px;
+    border-radius:15px;
+    text-align:center;
+    text-decoration:none;
+    margin-top:15px;
+    font-weight:bold;
 }
 
-/* UPI */
-.upi {
-    background: #2ecc71;
-    color: white;
-}
+/* COLORS */
+.upi { background:linear-gradient(90deg,#00c853,#2ecc71); }
+.cod { background:linear-gradient(90deg,#ff9800,#ff5722); }
 
-/* COD */
-.cod {
-    background: #f39c12;
-    color: white;
-}
-
-.auto {
-    background: #eafaf1;
-    padding: 10px;
-    border-radius: 10px;
-    color: green;
-    font-weight: bold;
+.back {
+    display:block;
+    text-align:center;
+    margin-top:15px;
+    color:white;
+    opacity:0.7;
 }
 </style>
 </head>
 
 <body>
 
+<div class="container">
+
+<h2>💳 Checkout</h2>
+
 <div class="card">
 
-<h2>💳 Payment</h2>
-
-<div class="price-box">
-    <p>Total: ₹{{ total }}</p>
-    <p style="color:red;">Discount: -₹{{ discount }}</p>
-    <p class="final">Final: ₹{{ final_total }}</p>
+<div class="row">
+<span>Total</span>
+<span>₹{{ total }}</span>
 </div>
 
-<div class="auto">
-🎟️ SAVE100 coupon applied automatically
+<div class="row" style="color:lightgreen;">
+<span>Discount</span>
+<span>-₹{{ discount }}</span>
 </div>
 
-{% if msg %}
-<p>{{ msg }}</p>
-{% endif %}
+<hr>
 
-<p style="color:green;">🚚 Free Delivery</p>
+<div class="row final">
+<span>Final Amount</span>
+<span>₹{{ final_total }}</span>
+</div>
+
+</div>
 
 <!-- UPI -->
-<button class="upi" onclick="payUPI()">📱 Pay via UPI</button>
+<a href="/success" class="btn upi">📱 Pay via UPI</a>
 
 <!-- COD -->
-<form action="/success">
-<button class="cod">Cash on Delivery 💵</button>
-</form>
+<a href="/success" class="btn cod">💵 Cash on Delivery</a>
+
+<a href="/cart" class="back">⬅ Back to Cart</a>
 
 </div>
-
-<script>
-function payUPI(){
-    let amount = "{{ final_total }}";
-    let upi = "upi://pay?pa=8838145515@ybl&pn=VegStore&am=" + amount + "&cu=INR";
-    window.location.href = upi;
-}
-</script>
 
 </body>
 </html>
