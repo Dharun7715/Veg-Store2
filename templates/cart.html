@@ -1,52 +1,80 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cart</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            font-family: Arial;
-            background: #2c3e50;
-            color: white;
-        }
+<style>
+body {
+    margin:0;
+    font-family:Arial;
+    background:linear-gradient(135deg,#141e30,#243b55);
+    color:white;
+}
 
-        .container {
-            max-width: 420px;
-            margin: auto;
-            padding: 15px;
-        }
+.container {
+    max-width:420px;
+    margin:auto;
+    padding:15px;
+}
 
-        .card {
-            background: #34495e;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 10px;
-        }
+h2 {
+    text-align:center;
+}
 
-        .btn {
-            padding: 5px 10px;
-            background: green;
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
-        }
+/* CARD */
+.card {
+    background:rgba(255,255,255,0.12);
+    backdrop-filter:blur(12px);
+    padding:15px;
+    margin:12px 0;
+    border-radius:18px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.4);
+}
 
-        .remove {
-            background: red;
-        }
+/* BUTTONS */
+.btn {
+    padding:6px 12px;
+    border-radius:10px;
+    color:white;
+    text-decoration:none;
+    margin-right:5px;
+}
 
-        .checkout {
-            display: block;
-            background: orange;
-            padding: 10px;
-            text-align: center;
-            border-radius: 10px;
-            margin-top: 10px;
-            text-decoration: none;
-            color: white;
-        }
-    </style>
+.plus { background:#2ecc71; }
+.minus { background:#27ae60; }
+.remove { background:#ff4b2b; }
+
+/* TOTAL */
+.total-box {
+    background:#111;
+    padding:12px;
+    border-radius:12px;
+    text-align:center;
+    margin-top:10px;
+}
+
+/* CHECKOUT */
+.checkout {
+    display:block;
+    background:linear-gradient(90deg,#ff9800,#ff5722);
+    padding:14px;
+    border-radius:15px;
+    text-align:center;
+    margin-top:15px;
+    color:white;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.back {
+    display:block;
+    text-align:center;
+    margin-top:15px;
+    color:white;
+    opacity:0.7;
+}
+</style>
 </head>
 
 <body>
@@ -55,24 +83,33 @@
 
 <h2>🛒 Your Cart</h2>
 
+{% if items %}
 {% for item in items %}
 <div class="card">
-    <h3>{{ item.name }}</h3>
-    <p>₹{{ item.price }} × {{ item.qty }}</p>
-    <p>Total: ₹{{ item.total }}</p>
 
-    <a href="/increase/{{ item.name }}" class="btn">➕</a>
-    <a href="/decrease/{{ item.name }}" class="btn">➖</a>
-    <a href="/remove/{{ item.name }}" class="btn remove">❌ Remove</a>
+<h3>{{ item.name }}</h3>
+
+<p>₹{{ item.price }} × {{ item.qty }}</p>
+<p><b>Total: ₹{{ item.total }}</b></p>
+
+<a href="/increase/{{ item.name }}" class="btn plus">➕</a>
+<a href="/decrease/{{ item.name }}" class="btn minus">➖</a>
+<a href="/remove/{{ item.name }}" class="btn remove">❌</a>
+
 </div>
 {% endfor %}
 
-<h3>Total: ₹{{ total }}</h3>
+<div class="total-box">
+<h3>Grand Total: ₹{{ total }}</h3>
+</div>
 
-<a href="/checkout" class="checkout">💳 Checkout</a>
+<a href="/payment" class="checkout">💳 Checkout</a>
 
-<br><br>
-<a href="/">⬅ Back</a>
+{% else %}
+<p style="text-align:center;">Cart is empty 😢</p>
+{% endif %}
+
+<a href="/" class="back">⬅ Back to shop</a>
 
 </div>
 
