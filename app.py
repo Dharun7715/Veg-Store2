@@ -8,16 +8,13 @@ ADMIN_PHONE = "8838145515"
 
 # PRODUCTS
 vegetables = [
-    {"name": "Tomato", "price": 20, "mrp": 30},
-    {"name": "Potato", "price": 30, "mrp": 40},
-    {"name": "Onion", "price": 25, "mrp": 35},
-    {"name": "Carrot", "price": 40, "mrp": 55},
-    {"name": "Beans", "price": 40, "mrp": 60},
-    {"name": "Beetroot", "price": 50, "mrp": 70},
-    {"name": "Cabbage", "price": 60, "mrp": 80},
-    {"name": "Raw Mango", "price": 120, "mrp": 150},
-    {"name": "Lemon", "price": 150, "mrp": 180},
-    {"name": "Cucumber", "price": 50, "mrp": 70}
+    {"name": "Tomato", "price": 20},
+    {"name": "Potato", "price": 30},
+    {"name": "Onion", "price": 25},
+    {"name": "Carrot", "price": 40},
+    {"name": "Beans", "price": 40},
+    {"name": "Beetroot", "price": 50},
+    {"name": "Cabbage", "price": 60}
 ]
 
 # DB INIT
@@ -39,88 +36,92 @@ def init_db():
 
 init_db()
 
-# LOGIN
+# LOGIN → HOME
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
         phone = request.form['phone']
         session['user'] = phone
         session['cart'] = {}
-        return redirect('/')
+        return redirect('/')   # ✅ HOME
+
     return render_template("login.html")
 
 # HOME
 @app.route('/')
 def home():
-    search = request.args.get("search","").lower()
-    data = [v for v in vegetables if search in v["name"].lower()] if search else vegetables
-    cart = session.get("cart",{})
+    cart = session.get("cart", {})
     return render_template("index.html",
-        vegetables=data,
+        vegetables=vegetables,
         cart=cart,
         cart_count=sum(cart.values()),
-        search=search,
         is_admin=(session.get("user")==ADMIN_PHONE)
     )
 
 # ADD CART
 @app.route('/add/<name>')
 def add(name):
-    cart = session.get("cart",{})
-    cart[name] = cart.get(name,0)+1
-    session["cart"]=cart
-    session["msg"]=f"{name} added"
+    cart = session.get("cart", {})
+    cart[name] = cart.get(name, 0) + 1
+    session["cart"] = cart
     return redirect('/')
 
 # INCREASE
 @app.route('/increase/<name>')
 def increase(name):
-    cart = session.get("cart",{})
-    cart[name]+=1
-    session["cart"]=cart
+    cart = session.get("cart", {})
+    cart[name] += 1
+    session["cart"] = cart
     return redirect('/')
 
 # DECREASE
 @app.route('/decrease/<name>')
 def decrease(name):
-    cart = session.get("cart",{})
-    if cart[name]>1:
-        cart[name]-=1
+    cart = session.get("cart", {})
+    if cart[name] > 1:
+        cart[name] -= 1
     else:
         del cart[name]
-    session["cart"]=cart
+    session["cart"] = cart
     return redirect('/')
 
 # REMOVE
 @app.route('/remove/<name>')
 def remove(name):
-    cart=session.get("cart",{})
-    cart.pop(name,None)
-    session["cart"]=cart
+    cart = session.get("cart", {})
+    cart.pop(name, None)
+    session["cart"] = cart
     return redirect('/cart')
 
 # CART
 @app.route('/cart')
 def cart():
-    cart=session.get("cart",{})
-    items=[]
-    total=0
-    for name,qty in cart.items():
-        for v in vegetables:
-            if v["name"]==name:
-                t=v["price"]*qty
-                total+=t
-                items.append({"name":name,"qty":qty,"price":v["price"],"total":t})
-    return render_template("cart.html",items=items,total=total)
+    cart = session.get("cart", {})
+    items = []
+    total = 0
 
-# 📍 ADDRESS MAP (THARAMANGALAM ONLY)
+    for name, qty in cart.items():
+        for v in vegetables:
+            if v["name"] == name:
+                t = v["price"] * qty
+                total += t
+                items.append({
+                    "name": name,
+                    "qty": qty,
+                    "price": v["price"],
+                    "total": t
+                })
+
+    return render_template("cart.html", items=items, total=total)
+
+# ADDRESS (MAP PAGE - OPTIONAL)
 @app.route('/address', methods=['GET','POST'])
 def address():
     if request.method == 'POST':
         lat = float(request.form['lat'])
         lng = float(request.form['lng'])
 
-        # Tharamangalam center
+        # Tharamangalam restriction
         center_lat = 11.6943
         center_lng = 77.9680
 
@@ -128,12 +129,7 @@ def address():
             session['address'] = f"{lat},{lng}"
             return redirect('/payment')
         else:
-            return """
-            <h2 style='text-align:center;color:red;'>
-            ❌ Delivery available only in Tharamangalam
-            </h2>
-            <a href='/address' style='display:block;text-align:center;'>Try again</a>
-            """
+            return "❌ Delivery only in Tharamangalam"
 
     return render_template("address.html")
 
@@ -141,28 +137,31 @@ def address():
 @app.route('/payment')
 @app.route('/checkout')
 def payment():
-    cart=session.get("cart",{})
-    total=0
 
-    for name,qty in cart.items():
+    cart = session.get("cart", {})
+    total = 0
+
+    for name, qty in cart.items():
         for v in vegetables:
-            if v["name"]==name:
-                total+=v["price"]*qty
+            if v["name"] == name:
+                total += v["price"] * qty
 
-    discount=0
-    if total>=300:
-        discount+=50
+    discount = 0
 
-    conn=sqlite3.connect("database.db")
-    cur=conn.cursor()
+    if total >= 300:
+        discount += 50
+
+    # first order bonus
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM orders WHERE username=?", (session.get("user"),))
-    count=cur.fetchone()[0]
+    count = cur.fetchone()[0]
     conn.close()
 
-    if count==0:
-        discount+=100
+    if count == 0:
+        discount += 100
 
-    final_total=max(total-discount,0)
+    final_total = max(total - discount, 0)
 
     return render_template("payment.html",
         total=total,
@@ -173,58 +172,59 @@ def payment():
 # SUCCESS
 @app.route('/success')
 def success():
-    cart=session.get("cart",{})
+
+    cart = session.get("cart", {})
 
     if not cart:
         return "Cart empty ❌"
 
-    conn=sqlite3.connect("database.db")
-    cur=conn.cursor()
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
 
-    for name,qty in cart.items():
+    for name, qty in cart.items():
         for v in vegetables:
-            if v["name"]==name:
+            if v["name"] == name:
                 cur.execute(
                     "INSERT INTO orders (username,item,quantity,total,status) VALUES (?,?,?,?,?)",
-                    (session.get("user"),name,qty,v["price"]*qty,"Pending")
+                    (session.get("user"), name, qty, v["price"] * qty, "Pending")
                 )
 
     conn.commit()
     conn.close()
 
-    session["cart"]={}
+    session["cart"] = {}
     return render_template("success.html")
 
 # ORDERS
 @app.route('/orders')
 def orders():
-    conn=sqlite3.connect("database.db")
-    cur=conn.cursor()
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
     cur.execute("SELECT item,quantity,total,status FROM orders WHERE username=?", (session.get("user"),))
-    data=cur.fetchall()
+    data = cur.fetchall()
     conn.close()
-    return render_template("orders.html",orders=data)
+    return render_template("orders.html", orders=data)
 
 # PROFILE
 @app.route('/profile')
 def profile():
-    return render_template("profile.html",user=session.get("user"))
+    return render_template("profile.html", user=session.get("user"))
 
 # ADMIN
-@app.route('/admin',methods=['GET','POST'])
+@app.route('/admin', methods=['GET','POST'])
 def admin():
-    if session.get("user")!=ADMIN_PHONE:
+    if session.get("user") != ADMIN_PHONE:
         return "Access Denied"
 
-    conn=sqlite3.connect("database.db")
-    cur=conn.cursor()
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
 
-    if request.method=='POST':
-        cur.execute("UPDATE orders SET status=? WHERE id=?", (request.form['status'],request.form['id']))
+    if request.method == 'POST':
+        cur.execute("UPDATE orders SET status=? WHERE id=?", (request.form['status'], request.form['id']))
         conn.commit()
 
     cur.execute("SELECT * FROM orders")
-    data=cur.fetchall()
+    data = cur.fetchall()
 
     return render_template("admin.html",
         orders=data,
