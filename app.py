@@ -14,10 +14,7 @@ vegetables = [
     {"name": "Carrot", "price": 40, "mrp": 55},
     {"name": "Beans", "price": 40, "mrp": 60},
     {"name": "Beetroot", "price": 50, "mrp": 70},
-    {"name": "Cabbage", "price": 60, "mrp": 80},
-    {"name": "Raw Mango", "price": 120, "mrp": 150},
-    {"name": "Lemon", "price": 150, "mrp": 180},
-    {"name": "Cucumber", "price": 50, "mrp": 70}
+    {"name": "Cabbage", "price": 60, "mrp": 80}
 ]
 
 # DB
@@ -63,7 +60,7 @@ def home():
         is_admin=(session.get("user")==ADMIN_PHONE)
     )
 
-# ADD / UPDATE CART
+# ADD CART
 @app.route('/add/<name>')
 def add(name):
     cart = session.get("cart",{})
@@ -72,6 +69,7 @@ def add(name):
     session["msg"]=f"{name} added"
     return redirect('/')
 
+# INCREASE
 @app.route('/increase/<name>')
 def increase(name):
     cart = session.get("cart",{})
@@ -79,6 +77,7 @@ def increase(name):
     session["cart"]=cart
     return redirect('/cart')
 
+# DECREASE
 @app.route('/decrease/<name>')
 def decrease(name):
     cart = session.get("cart",{})
@@ -89,6 +88,7 @@ def decrease(name):
     session["cart"]=cart
     return redirect('/cart')
 
+# REMOVE
 @app.route('/remove/<name>')
 def remove(name):
     cart=session.get("cart",{})
@@ -110,8 +110,9 @@ def cart():
                 items.append({"name":name,"qty":qty,"price":v["price"],"total":t})
     return render_template("cart.html",items=items,total=total)
 
-# PAYMENT (COUPON + OFFER)
+# PAYMENT (DOUBLE ROUTE FIX 🔥)
 @app.route('/payment')
+@app.route('/checkout')
 def payment():
     cart=session.get("cart",{})
     total=0
@@ -121,18 +122,10 @@ def payment():
             if v["name"]==name:
                 total+=v["price"]*qty
 
-    conn=sqlite3.connect("database.db")
-    cur=conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM orders WHERE username=?", (session.get("user"),))
-    count=cur.fetchone()[0]
-    conn.close()
-
+    # discount
     discount=0
     if total>=300:
         discount+=50
-
-    if count==0:
-        discount+=100
 
     final_total=max(total-discount,0)
 
@@ -152,14 +145,16 @@ def success():
     for name,qty in cart.items():
         for v in vegetables:
             if v["name"]==name:
-                cur.execute("INSERT INTO orders (username,item,quantity,total,status) VALUES (?,?,?,?,?)",
-                (session.get("user"),name,qty,v["price"]*qty,"Pending"))
+                cur.execute(
+                    "INSERT INTO orders (username,item,quantity,total,status) VALUES (?,?,?,?,?)",
+                    (session.get("user"),name,qty,v["price"]*qty,"Pending")
+                )
 
     conn.commit()
     conn.close()
 
     session["cart"]={}
-    return render_template("success.html")
+    return redirect('/orders')
 
 # ORDERS
 @app.route('/orders')
