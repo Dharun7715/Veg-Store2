@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Select Address</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg,#141e30,#243b55);
+    color: white;
+}
+
+/* TITLE */
+h2 {
+    text-align: center;
+    padding: 10px;
+}
+
+/* MAP */
+#map {
+    height: 70vh;
+    border-radius: 10px;
+    margin: 10px;
+}
+
+/* INFO BOX */
+.info {
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* BUTTON */
+.btn {
+    display: block;
+    width: 90%;
+    margin: 10px auto;
+    padding: 14px;
+    border-radius: 15px;
+    background: linear-gradient(90deg,#00c853,#2ecc71);
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    font-weight: bold;
+}
+
+.back {
+    text-align: center;
+    display: block;
+    margin-top: 10px;
+    color: white;
+    opacity: 0.7;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>📍 Select Delivery Location</h2>
+
+<div id="map"></div>
+
+<p class="info">Tap anywhere on map to select your address</p>
+
+<form method="POST">
+    <input type="hidden" name="lat" id="lat">
+    <input type="hidden" name="lng" id="lng">
+
+    <button class="btn">✅ Confirm Address</button>
+</form>
+
+<a href="/cart" class="back">⬅ Back to Cart</a>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+// Default map (Tharamangalam)
+var map = L.map('map').setView([11.6943, 77.9680], 14);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: 'Map data © OpenStreetMap'
+}).addTo(map);
+
+var marker;
+
+// Click to select location
+map.on('click', function(e){
+
+    if(marker){
+        map.removeLayer(marker);
+    }
+
+    marker = L.marker(e.latlng).addTo(map);
+
+    document.getElementById("lat").value = e.latlng.lat;
+    document.getElementById("lng").value = e.latlng.lng;
+
+});
+
+// OPTIONAL: auto current location
+navigator.geolocation.getCurrentPosition(function(position){
+    var lat = position.coords.latitude;
+    var lng = position.coords.longitude;
+
+    map.setView([lat, lng], 15);
+
+    marker = L.marker([lat, lng]).addTo(map);
+
+    document.getElementById("lat").value = lat;
+    document.getElementById("lng").value = lng;
+});
+
+</script>
+
+</body>
+</html>
