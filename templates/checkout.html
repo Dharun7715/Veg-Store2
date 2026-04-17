@@ -1,17 +1,149 @@
 <!DOCTYPE html>
 <html>
-<head><title>Checkout</title></head>
+<head>
+<title>Checkout</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg,#141e30,#243b55);
+    color: white;
+}
+
+/* CONTAINER */
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 15px;
+}
+
+/* TITLE */
+h2 {
+    text-align: center;
+}
+
+/* CARD */
+.card {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    padding: 20px;
+    border-radius: 18px;
+    margin-top: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+/* ROW */
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin: 12px 0;
+    font-size: 15px;
+}
+
+/* DISCOUNT */
+.discount {
+    color: lightgreen;
+}
+
+/* FINAL */
+.final {
+    font-size: 20px;
+    font-weight: bold;
+    color: #2ecc71;
+}
+
+/* BUTTON */
+.btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: 15px;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+/* COLORS */
+.upi {
+    background: linear-gradient(90deg,#00c853,#2ecc71);
+}
+
+.cod {
+    background: linear-gradient(90deg,#ff9800,#ff5722);
+}
+
+/* NOTE */
+.note {
+    text-align: center;
+    font-size: 13px;
+    margin-top: 10px;
+    opacity: 0.8;
+}
+
+/* BACK */
+.back {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: white;
+    opacity: 0.7;
+}
+
+</style>
+</head>
+
 <body>
 
-<h2>Checkout</h2>
+<div class="container">
 
-<form method="POST">
-<input name="name" placeholder="Your Name" required><br><br>
-<textarea name="address" placeholder="Address" required></textarea><br><br>
-<button>Place Order</button>
-</form>
+<h2>💳 Checkout</h2>
 
-<a href="/cart">Back</a>
+<div class="card">
+
+<!-- TOTAL -->
+<div class="row">
+<span>Total Amount</span>
+<span>₹{{ total }}</span>
+</div>
+
+<!-- DISCOUNT -->
+<div class="row discount">
+<span>Discount Applied</span>
+<span>-₹{{ discount }}</span>
+</div>
+
+<hr>
+
+<!-- FINAL -->
+<div class="row final">
+<span>Final Payable</span>
+<span>₹{{ final_total }}</span>
+</div>
+
+</div>
+
+<!-- PAYMENT BUTTONS -->
+
+<a href="/success" class="btn upi">
+📱 Pay via UPI
+</a>
+
+<a href="/success" class="btn cod">
+💵 Cash on Delivery
+</a>
+
+<div class="note">
+✔️ Safe & Secure Payment
+✔️ Fast Delivery 🚚
+</div>
+
+<a href="/cart" class="back">⬅ Back to Cart</a>
+
+</div>
 
 </body>
 </html>
