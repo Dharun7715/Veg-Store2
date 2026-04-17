@@ -36,18 +36,37 @@ def init_db():
 
 init_db()
 
-# ---------------- LOGIN ---------------- #
+# ---------------- LOGIN (OTP) ---------------- #
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        session['user'] = request.form['phone']
-        session['cart'] = {}
-        return redirect('/')
+        phone = request.form['phone']
+        session['temp_phone'] = phone
+        session['otp'] = phone[-4:]   # last 4 digits
+        return redirect('/otp')
+
     return render_template("login.html")
+
+@app.route('/otp', methods=['GET','POST'])
+def otp():
+    if request.method == 'POST':
+        user_otp = request.form['otp']
+
+        if user_otp == session.get('otp'):
+            session['user'] = session.get('temp_phone')
+            session['cart'] = {}
+            return redirect('/')
+        else:
+            return "<h2 style='color:red;text-align:center;'>❌ Wrong OTP</h2>"
+
+    return render_template("verify.html", last4=session.get('otp'))
 
 # ---------------- HOME ---------------- #
 @app.route('/')
 def home():
+    if 'user' not in session:
+        return redirect('/login')
+
     cart = session.get("cart", {})
     return render_template("index.html",
         vegetables=vegetables,
@@ -112,7 +131,6 @@ def address():
         lat = float(request.form['lat'])
         lng = float(request.form['lng'])
 
-        # Tharamangalam restriction
         if abs(lat - 11.6943) < 0.03 and abs(lng - 77.9680) < 0.03:
             session['address'] = f"{lat},{lng}"
             return redirect('/payment')
@@ -136,11 +154,9 @@ def payment():
 
     discount = 0
 
-    # ₹300 offer
     if total >= 300:
         discount += 50
 
-    # first order ₹100
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM orders WHERE username=?", (session.get("user"),))
