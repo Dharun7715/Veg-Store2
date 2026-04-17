@@ -21,31 +21,44 @@ body {
     font-weight: bold;
 }
 
-/* CART BADGE */
-.cart {
-    background: green;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 12px;
-    display: inline-block;
+/* NAVBAR */
+.navbar {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
 }
+
+.nav-btn {
+    padding: 8px 12px;
+    border-radius: 15px;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.cart { background: green; }
+.orders { background: orange; }
+.profile { background: purple; }
+.admin { background: black; }
+.logout { background: red; }
 
 /* LOCATION */
 .location-box {
     text-align: center;
     color: white;
+    margin: 10px;
 }
 
-.loc-btn, .map-btn {
-    padding: 8px 12px;
-    border-radius: 10px;
+.loc-btn {
+    background: linear-gradient(45deg,#00c853,#2ecc71);
+    padding: 8px 15px;
+    border-radius: 20px;
     border: none;
     color: white;
-    margin: 5px;
+    font-weight: bold;
 }
-
-.loc-btn { background: #2ecc71; }
-.map-btn { background: #3498db; text-decoration: none; }
 
 /* GRID */
 .container {
@@ -85,6 +98,7 @@ body {
     color: white;
     padding: 4px 10px;
     border-radius: 10px;
+    font-size: 12px;
 }
 
 /* PRICE */
@@ -104,22 +118,34 @@ body {
 }
 
 /* BUTTON */
-.btn {
-    background: green;
-    padding: 6px 12px;
-    border-radius: 10px;
+.add-btn {
+    background: linear-gradient(45deg,#00c853,#2ecc71);
     color: white;
     border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.qty-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.qty-box button {
+    background: #2ecc71;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
 }
 
 .qty {
-    margin: 0 10px;
-}
-
-button {
-    border: none;
-    border-radius: 8px;
-    padding: 5px 10px;
+    font-weight: bold;
 }
 
 </style>
@@ -129,14 +155,23 @@ button {
 
 <div class="header">🥦 GreenBasket</div>
 
-<div style="text-align:center">
-🛒 <span id="cartCount">{{ cart_count }}</span>
+<!-- NAVBAR -->
+<div class="navbar">
+    <a href="/cart" class="nav-btn cart">🛒 {{ cart_count }}</a>
+    <a href="/orders" class="nav-btn orders">Orders</a>
+    <a href="/profile" class="nav-btn profile">Profile</a>
+
+    {% if is_admin %}
+    <a href="/admin" class="nav-btn admin">Admin</a>
+    {% endif %}
+
+    <a href="/logout" class="nav-btn logout">Logout</a>
 </div>
 
 <!-- LOCATION -->
 <div class="location-box">
-<p id="locationText">📍 Select location</p>
-<button onclick="getLocation()" class="loc-btn">Use Location</button>
+<p id="locationText">📍 Select delivery location</p>
+<button onclick="getLocation()" class="loc-btn">Use Current Location</button>
 </div>
 
 <!-- PRODUCTS -->
@@ -149,18 +184,20 @@ button {
 <h3>{{ v.name }}</h3>
 
 <p>
-<span class="old">₹{{ v.price+10 }}</span>
-<span class="price">₹{{ v.price }}</span>
+<span class="old">₹{{ v.price + 10 }}</span>
+<span class="price"> ₹{{ v.price }}</span>
 <span class="off">(20% OFF)</span>
 </p>
 
 <div id="controls-{{ v.name }}">
 {% if cart.get(v.name) %}
-<button onclick="decrease('{{ v.name }}')">-</button>
-<span class="qty">{{ cart[v.name] }}</span>
-<button onclick="increase('{{ v.name }}')">+</button>
+<div class="qty-box">
+    <button onclick="decrease('{{ v.name }}')">−</button>
+    <span class="qty">{{ cart[v.name] }}</span>
+    <button onclick="increase('{{ v.name }}')">+</button>
+</div>
 {% else %}
-<button onclick="addItem('{{ v.name }}')" class="btn">Add</button>
+<button onclick="addItem('{{ v.name }}')" class="add-btn">+ Add</button>
 {% endif %}
 </div>
 
@@ -170,14 +207,36 @@ button {
 
 <script>
 
-// LOCATION
+// 📍 LOCATION (REAL ADDRESS)
 function getLocation(){
     navigator.geolocation.getCurrentPosition(function(pos){
-        document.getElementById("locationText").innerHTML="📍 Location detected";
+
+        let lat = pos.coords.latitude;
+        let lng = pos.coords.longitude;
+
+        document.getElementById("locationText").innerHTML = "⏳ Getting address...";
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(res => res.json())
+        .then(data => {
+
+            let addr = data.address;
+
+            let street =
+                (addr.road || "") + ", " +
+                (addr.suburb || "") + ", " +
+                (addr.city || addr.town || "");
+
+            document.getElementById("locationText").innerHTML =
+                "📍 " + street;
+        });
+
+    }, function(){
+        alert("Location access denied ❌");
     });
 }
 
-// CART
+// 🛒 CART AJAX
 function addItem(name){
     fetch('/add/'+name)
     .then(res=>res.json())
@@ -204,17 +263,19 @@ function decrease(name){
 
 function updateUI(name,qty,total){
 
-    document.getElementById("cartCount").innerText = total;
+    document.querySelector(".cart").innerText = "🛒 " + total;
 
     let div = document.getElementById("controls-"+name);
 
     if(qty==0){
-        div.innerHTML = `<button onclick="addItem('${name}')" class="btn">Add</button>`;
+        div.innerHTML = `<button onclick="addItem('${name}')" class="add-btn">+ Add</button>`;
     } else {
         div.innerHTML = `
-        <button onclick="decrease('${name}')">-</button>
-        <span class="qty">${qty}</span>
-        <button onclick="increase('${name}')">+</button>
+        <div class="qty-box">
+            <button onclick="decrease('${name}')">−</button>
+            <span class="qty">${qty}</span>
+            <button onclick="increase('${name}')">+</button>
+        </div>
         `;
     }
 }
