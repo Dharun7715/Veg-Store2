@@ -8,57 +8,33 @@
 body {
     margin: 0;
     font-family: Arial;
-    background: linear-gradient(135deg, #00c9ff, #92fe9d);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-/* card */
-.box {
-    background: white;
-    padding: 25px;
-    border-radius: 20px;
-    width: 90%;
-    max-width: 350px;
+    background: linear-gradient(135deg,#00c6ff,#0072ff);
+    color: white;
     text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    animation: pop 0.4s ease;
 }
 
-h2 {
-    margin-bottom: 10px;
+.box {
+    margin-top: 120px;
 }
 
 input {
-    width: 100%;
     padding: 12px;
-    margin: 12px 0;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    font-size: 16px;
+    width: 250px;
+    border-radius: 12px;
+    border: none;
+    outline: none;
 }
 
 button {
-    width: 100%;
-    padding: 12px;
-    background: #2ecc71;
-    color: white;
+    margin-top: 15px;
+    padding: 12px 20px;
+    border-radius: 12px;
     border: none;
-    border-radius: 10px;
+    background: green;
+    color: white;
     font-size: 16px;
 }
 
-button:hover {
-    background: #27ae60;
-}
-
-/* animation */
-@keyframes pop {
-    from {transform: scale(0.9); opacity: 0;}
-    to {transform: scale(1); opacity: 1;}
-}
 </style>
 </head>
 
@@ -67,11 +43,11 @@ button:hover {
 <div class="box">
 
 <h2>📱 Login</h2>
-<p>Enter your mobile number</p>
 
 <form method="POST">
-    <input type="text" name="phone" placeholder="Enter 10-digit number" required>
-    <button>Send OTP</button>
+<input type="text" name="phone" placeholder="Enter phone number" required>
+<br>
+<button type="submit">Send OTP</button>
 </form>
 
 </div>
