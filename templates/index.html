@@ -16,23 +16,18 @@ body {
 .header {
     text-align: center;
     padding: 15px;
-    font-size: 22px;
     color: white;
+    font-size: 22px;
     font-weight: bold;
 }
 
-/* TOP BAR */
-.top-bar {
-    display: flex;
-    justify-content: center;
-    margin: 10px;
-}
-
+/* CART BADGE */
 .cart {
     background: green;
+    color: white;
     padding: 6px 12px;
     border-radius: 12px;
-    color: white;
+    display: inline-block;
 }
 
 /* LOCATION */
@@ -59,11 +54,10 @@ body {
     padding: 10px;
 }
 
-@media (min-width: 600px) {
+@media (min-width:600px){
     .container { grid-template-columns: repeat(2,1fr); }
 }
-
-@media (min-width: 900px) {
+@media (min-width:900px){
     .container { grid-template-columns: repeat(3,1fr); }
 }
 
@@ -75,6 +69,11 @@ body {
     border-radius: 15px;
     text-align: center;
     position: relative;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: scale(1.03);
 }
 
 /* SALE */
@@ -86,7 +85,6 @@ body {
     color: white;
     padding: 4px 10px;
     border-radius: 10px;
-    font-size: 12px;
 }
 
 /* PRICE */
@@ -116,7 +114,6 @@ body {
 
 .qty {
     margin: 0 10px;
-    font-weight: bold;
 }
 
 button {
@@ -132,16 +129,14 @@ button {
 
 <div class="header">🥦 GreenBasket</div>
 
-<div class="top-bar">
-    <div class="cart">🛒 <span id="cartCount">{{ cart_count }}</span></div>
+<div style="text-align:center">
+🛒 <span id="cartCount">{{ cart_count }}</span>
 </div>
 
 <!-- LOCATION -->
 <div class="location-box">
 <p id="locationText">📍 Select location</p>
-
 <button onclick="getLocation()" class="loc-btn">Use Location</button>
-<a href="/address" class="map-btn">Map</a>
 </div>
 
 <!-- PRODUCTS -->
@@ -154,20 +149,18 @@ button {
 <h3>{{ v.name }}</h3>
 
 <p>
-<span class="old">₹{{ v.price + 10 }}</span>
-<span class="price"> ₹{{ v.price }}</span>
-<span class="off">
-({{ ((v.price+10 - v.price)*100 // (v.price+10)) }}% OFF)
-</span>
+<span class="old">₹{{ v.price+10 }}</span>
+<span class="price">₹{{ v.price }}</span>
+<span class="off">(20% OFF)</span>
 </p>
 
 <div id="controls-{{ v.name }}">
 {% if cart.get(v.name) %}
-    <button onclick="decrease('{{ v.name }}')">-</button>
-    <span class="qty">{{ cart[v.name] }}</span>
-    <button onclick="increase('{{ v.name }}')">+</button>
+<button onclick="decrease('{{ v.name }}')">-</button>
+<span class="qty">{{ cart[v.name] }}</span>
+<button onclick="increase('{{ v.name }}')">+</button>
 {% else %}
-    <button onclick="addItem('{{ v.name }}')" class="btn">Add</button>
+<button onclick="addItem('{{ v.name }}')" class="btn">Add</button>
 {% endif %}
 </div>
 
@@ -180,14 +173,7 @@ button {
 // LOCATION
 function getLocation(){
     navigator.geolocation.getCurrentPosition(function(pos){
-        let lat = pos.coords.latitude;
-        let lng = pos.coords.longitude;
-
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-        .then(res => res.json())
-        .then(data=>{
-            document.getElementById("locationText").innerHTML = "📍 " + data.display_name;
-        });
+        document.getElementById("locationText").innerHTML="📍 Location detected";
     });
 }
 
