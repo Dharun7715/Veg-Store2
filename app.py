@@ -6,7 +6,7 @@ app.secret_key = "secret123"
 
 ADMIN_PHONE = "8838145515"
 
-# PRODUCTS
+# ---------------- PRODUCTS ---------------- #
 vegetables = [
     {"name": "Tomato", "price": 20},
     {"name": "Potato", "price": 30},
@@ -18,7 +18,6 @@ vegetables = [
 ]
 
 # ---------------- DATABASE ---------------- #
-
 def init_db():
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
@@ -38,18 +37,15 @@ def init_db():
 init_db()
 
 # ---------------- LOGIN ---------------- #
-
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        phone = request.form['phone']
-        session['user'] = phone
+        session['user'] = request.form['phone']
         session['cart'] = {}
         return redirect('/')
     return render_template("login.html")
 
 # ---------------- HOME ---------------- #
-
 @app.route('/')
 def home():
     cart = session.get("cart", {})
@@ -57,11 +53,10 @@ def home():
         vegetables=vegetables,
         cart=cart,
         cart_count=sum(cart.values()),
-        is_admin=(session.get("user") == ADMIN_PHONE)
+        is_admin=(session.get("user")==ADMIN_PHONE)
     )
 
 # ---------------- AJAX CART ---------------- #
-
 @app.route('/add/<name>')
 def add(name):
     cart = session.get("cart", {})
@@ -90,7 +85,6 @@ def decrease(name):
     return jsonify({"qty": cart.get(name, 0), "cart_count": sum(cart.values())})
 
 # ---------------- CART PAGE ---------------- #
-
 @app.route('/cart')
 def cart():
     cart = session.get("cart", {})
@@ -112,26 +106,26 @@ def cart():
     return render_template("cart.html", items=items, total=total)
 
 # ---------------- ADDRESS ---------------- #
-
 @app.route('/address', methods=['GET','POST'])
 def address():
     if request.method == 'POST':
         lat = float(request.form['lat'])
         lng = float(request.form['lng'])
 
+        # Tharamangalam restriction
         if abs(lat - 11.6943) < 0.03 and abs(lng - 77.9680) < 0.03:
             session['address'] = f"{lat},{lng}"
             return redirect('/payment')
         else:
-            return "❌ Delivery only in Tharamangalam"
+            return "<h2 style='color:red;text-align:center;'>❌ Only Tharamangalam Delivery</h2>"
 
     return render_template("address.html")
 
 # ---------------- PAYMENT ---------------- #
-
 @app.route('/payment')
 @app.route('/checkout')
 def payment():
+
     cart = session.get("cart", {})
     total = 0
 
@@ -142,9 +136,11 @@ def payment():
 
     discount = 0
 
+    # ₹300 offer
     if total >= 300:
         discount += 50
 
+    # first order ₹100
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM orders WHERE username=?", (session.get("user"),))
@@ -163,9 +159,9 @@ def payment():
     )
 
 # ---------------- SUCCESS ---------------- #
-
 @app.route('/success')
 def success():
+
     cart = session.get("cart", {})
 
     if not cart:
@@ -186,10 +182,10 @@ def success():
     conn.close()
 
     session["cart"] = {}
+
     return render_template("success.html")
 
 # ---------------- ORDERS ---------------- #
-
 @app.route('/orders')
 def orders():
     conn = sqlite3.connect("database.db")
@@ -200,17 +196,16 @@ def orders():
     return render_template("orders.html", orders=data)
 
 # ---------------- PROFILE ---------------- #
-
 @app.route('/profile')
 def profile():
     return render_template("profile.html", user=session.get("user"))
 
 # ---------------- ADMIN ---------------- #
-
 @app.route('/admin', methods=['GET','POST'])
 def admin():
+
     if session.get("user") != ADMIN_PHONE:
-        return "Access Denied"
+        return "Access Denied ❌"
 
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
@@ -229,13 +224,11 @@ def admin():
     )
 
 # ---------------- LOGOUT ---------------- #
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
 
 # ---------------- RUN ---------------- #
-
 if __name__ == '__main__':
     app.run(debug=True)
