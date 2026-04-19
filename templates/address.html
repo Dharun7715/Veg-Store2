@@ -4,69 +4,42 @@
 <title>Select Address</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<!-- LEAFLET -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
 
 <style>
 
 body {
     margin: 0;
     font-family: Arial;
-    background: linear-gradient(135deg,#141e30,#243b55);
+    background: linear-gradient(135deg,#00c6ff,#0072ff);
     color: white;
+    text-align: center;
 }
 
-/* TITLE */
 h2 {
-    text-align: center;
-    padding: 10px;
-}
-
-/* MAP */
-#map {
-    height: 65vh;
-    margin: 10px;
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-}
-
-/* INFO */
-.info {
-    text-align: center;
-    font-size: 14px;
-    opacity: 0.8;
-}
-
-/* BUTTON */
-.btn {
-    display: block;
-    width: 90%;
-    margin: 10px auto;
-    padding: 14px;
-    border-radius: 15px;
-    text-align: center;
-    font-weight: bold;
-    border: none;
-}
-
-/* COLORS */
-.green {
-    background: linear-gradient(90deg,#00c853,#2ecc71);
-    color: white;
-}
-
-.blue {
-    background: linear-gradient(90deg,#2196f3,#00bcd4);
-    color: white;
-}
-
-/* BACK */
-.back {
-    text-align: center;
-    display: block;
     margin-top: 10px;
+}
+
+#map {
+    height: 400px;
+    margin: 10px;
+    border-radius: 15px;
+}
+
+#selected {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+button {
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    background: green;
     color: white;
-    opacity: 0.7;
+    margin-top: 10px;
+    font-size: 16px;
 }
 
 </style>
@@ -78,42 +51,96 @@ h2 {
 
 <div id="map"></div>
 
-<p class="info">Tap map OR use current location</p>
+<p id="selected">⏳ Detecting your location...</p>
 
-<form method="POST" onsubmit="return validateLocation()">
-    <input type="hidden" name="lat" id="lat">
-    <input type="hidden" name="lng" id="lng">
+<form method="POST">
+<input type="hidden" name="lat" id="lat">
+<input type="hidden" name="lng" id="lng">
+<input type="hidden" name="address" id="address">
 
-    <button class="btn green">✅ Confirm Address</button>
+<button type="submit">Confirm Location</button>
 </form>
 
-<button class="btn blue" onclick="getLocation()">
-📍 Use Current Location
-</button>
-
-<a href="/" class="back">⬅ Back</a>
-
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- LEAFLET -->
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
 <script>
 
-// Default → Tharamangalam
-var map = L.map('map').setView([11.6943, 77.9680], 14);
+// DEFAULT CENTER (THARAMANGALAM)
+let centerLat = 11.6943;
+let centerLng = 77.9680;
+
+let map = L.map('map').setView([centerLat, centerLng], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: 'Map data © OpenStreetMap'
+    attribution: '© OpenStreetMap'
 }).addTo(map);
 
-var marker;
+let marker;
 
-// 📍 Click selection
+// 🟢 DELIVERY RADIUS
+let circle = L.circle([centerLat, centerLng], {
+    color: 'green',
+    fillColor: '#2ecc71',
+    fillOpacity: 0.2,
+    radius: 3000
+}).addTo(map);
+
+
+// 🔥 AUTO CURRENT LOCATION
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos){
+
+        let lat = pos.coords.latitude;
+        let lng = pos.coords.longitude;
+
+        map.setView([lat, lng], 16);
+
+        marker = L.marker([lat, lng]).addTo(map);
+
+        document.getElementById("lat").value = lat;
+        document.getElementById("lng").value = lng;
+
+        document.getElementById("selected").innerHTML = "⏳ Detecting address...";
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(res => res.json())
+        .then(data => {
+
+            let addr = data.address;
+
+            let street =
+                (addr.road || "") + ", " +
+                (addr.suburb || "") + ", " +
+                (addr.city || addr.town || "");
+
+            document.getElementById("selected").innerHTML =
+                "📍 " + street;
+
+            document.getElementById("address").value = street;
+        });
+
+    }, function(){
+        document.getElementById("selected").innerHTML =
+            "❌ Location access denied";
+    });
+}
+
+
+// 🖱️ CLICK SELECT
 map.on('click', function(e){
-    setMarker(e.latlng.lat, e.latlng.lng);
-});
 
-// 📍 Set marker function
-function setMarker(lat, lng){
+    let lat = e.latlng.lat;
+    let lng = e.latlng.lng;
+
+    // 🔥 RADIUS CHECK
+    let distance = map.distance([centerLat, centerLng], [lat, lng]);
+
+    if(distance > 3000){
+        alert("❌ Outside delivery area");
+        return;
+    }
+
     if(marker){
         map.removeLayer(marker);
     }
@@ -122,48 +149,27 @@ function setMarker(lat, lng){
 
     document.getElementById("lat").value = lat;
     document.getElementById("lng").value = lng;
-}
 
-// 📍 Current location button
-function getLocation(){
-    navigator.geolocation.getCurrentPosition(function(position){
+    document.getElementById("selected").innerHTML = "⏳ Getting address...";
 
-        var lat = position.coords.latitude;
-        var lng = position.coords.longitude;
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+    .then(res => res.json())
+    .then(data => {
 
-        setMarker(lat, lng);
-        map.setView([lat, lng], 15);
+        let addr = data.address;
 
-    }, function(){
-        alert("❌ Location access denied");
+        let street =
+            (addr.road || "") + ", " +
+            (addr.suburb || "") + ", " +
+            (addr.city || addr.town || "");
+
+        document.getElementById("selected").innerHTML =
+            "📍 " + street;
+
+        document.getElementById("address").value = street;
     });
-}
 
-// 📍 Auto detect on load (best UX 🔥)
-window.onload = function(){
-    navigator.geolocation.getCurrentPosition(function(position){
-
-        var lat = position.coords.latitude;
-        var lng = position.coords.longitude;
-
-        setMarker(lat, lng);
-        map.setView([lat, lng], 15);
-
-    });
-};
-
-// ✅ Validation
-function validateLocation(){
-    var lat = document.getElementById("lat").value;
-    var lng = document.getElementById("lng").value;
-
-    if(!lat || !lng){
-        alert("⚠️ Please select a location first");
-        return false;
-    }
-
-    return true;
-}
+});
 
 </script>
 
