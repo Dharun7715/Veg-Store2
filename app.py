@@ -85,7 +85,7 @@ def home():
         is_admin=(session.get("user") == ADMIN_PHONE)
     )
 
-# ---------------- CART ACTIONS ---------------- #
+# ---------------- CART ---------------- #
 @app.route('/add/<name>')
 def add(name):
     cart = session.get("cart", {})
@@ -152,7 +152,7 @@ def checkout():
         wallet_balance=get_wallet(session.get("user"))
     )
 
-# ---------------- PLACE ORDER ---------------- #
+# ---------------- ORDER SUCCESS ---------------- #
 @app.route('/success')
 def success():
     user = session.get("user")
@@ -167,13 +167,28 @@ def success():
                 cur.execute("""
                     INSERT INTO orders (username,item,quantity,total,status)
                     VALUES (?,?,?,?,?)
-                """, (user, name, qty, v["price"] * qty, "Paid"))
+                """, (user, name, qty, v["price"] * qty, "Out for Delivery"))
 
     conn.commit()
     conn.close()
 
     session["cart"] = {}
     return render_template("success.html")
+
+# ---------------- ORDERS ---------------- #
+@app.route('/orders')
+def orders():
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM orders WHERE username=?", (session.get("user"),))
+    data = cur.fetchall()
+    conn.close()
+    return render_template("orders.html", orders=data)
+
+# ---------------- PROFILE ---------------- #
+@app.route('/profile')
+def profile():
+    return render_template("profile.html", user=session.get("user"))
 
 # ---------------- WALLET ---------------- #
 @app.route('/wallet')
@@ -192,55 +207,6 @@ def add_money():
     conn.close()
 
     return redirect('/wallet')
-
-# ---------------- WALLET PAY ---------------- #
-@app.route('/pay_wallet')
-def pay_wallet():
-    user = session.get("user")
-    cart = session.get("cart", {})
-
-    total = sum(v["price"] * qty for name, qty in cart.items()
-                for v in vegetables if v["name"] == name)
-
-    final = total + 30
-    balance = get_wallet(user)
-
-    if balance < final:
-        return "Not enough balance ❌"
-
-    conn = sqlite3.connect("database.db")
-    cur = conn.cursor()
-
-    cur.execute("UPDATE wallet SET balance = balance - ? WHERE username=?", (final, user))
-
-    for name, qty in cart.items():
-        for v in vegetables:
-            if v["name"] == name:
-                cur.execute("""
-                    INSERT INTO orders (username,item,quantity,total,status)
-                    VALUES (?,?,?,?,?)
-                """, (user, name, qty, v["price"] * qty, "Paid"))
-
-    conn.commit()
-    conn.close()
-
-    session["cart"] = {}
-    return render_template("success.html")
-
-# ---------------- USER ORDERS ---------------- #
-@app.route('/orders')
-def orders():
-    conn = sqlite3.connect("database.db")
-    cur = conn.cursor()
-    cur.execute("SELECT item,quantity,total,status FROM orders WHERE username=?", (session.get("user"),))
-    data = cur.fetchall()
-    conn.close()
-    return render_template("orders.html", orders=data)
-
-# ---------------- PROFILE ---------------- #
-@app.route('/profile')
-def profile():
-    return render_template("profile.html", user=session.get("user"))
 
 # ---------------- ADMIN ---------------- #
 @app.route('/admin')
@@ -261,39 +227,29 @@ def admin():
 
     return render_template("admin.html", orders=orders, revenue=revenue)
 
-# ---------------- GRAPH DATA (SAFE) ---------------- #
+# ---------------- GRAPH DATA ---------------- #
 @app.route('/admin_data')
 def admin_data():
-    try:
-        conn = sqlite3.connect("database.db")
-        cur = conn.cursor()
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
 
-        cur.execute("SELECT item, SUM(quantity) FROM orders GROUP BY item")
-        items = cur.fetchall()
+    cur.execute("SELECT item, SUM(quantity) FROM orders GROUP BY item")
+    items = cur.fetchall()
 
-        labels = [i[0] for i in items] if items else ["No Data"]
-        values = [i[1] for i in items] if items else [0]
+    labels = [i[0] for i in items] if items else ["No Data"]
+    values = [i[1] for i in items] if items else [0]
 
-        cur.execute("SELECT SUM(total) FROM orders")
-        total = cur.fetchone()[0] or 0
+    cur.execute("SELECT SUM(total) FROM orders")
+    total = cur.fetchone()[0] or 0
 
-        conn.close()
+    conn.close()
 
-        return jsonify({
-            "labels": labels,
-            "values": values,
-            "daily_labels": ["Today"],
-            "daily_values": [total]
-        })
-
-    except Exception as e:
-        print("ERROR:", e)
-        return jsonify({
-            "labels": ["Error"],
-            "values": [0],
-            "daily_labels": ["Today"],
-            "daily_values": [0]
-        })
+    return jsonify({
+        "labels": labels,
+        "values": values,
+        "daily_labels": ["Today"],
+        "daily_values": [total]
+    })
 
 # ---------------- UPDATE STATUS ---------------- #
 @app.route('/update_status', methods=['POST'])
@@ -308,6 +264,11 @@ def update_status():
     conn.close()
 
     return redirect('/admin')
+
+# ---------------- LIVE TRACKING ---------------- #
+@app.route('/track')
+def track():
+    return render_template("track.html")
 
 # ---------------- LOGOUT ---------------- #
 @app.route('/logout')
