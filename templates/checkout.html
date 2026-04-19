@@ -13,14 +13,12 @@ body {
     color: white;
 }
 
-/* CONTAINER */
 .container {
     max-width: 420px;
     margin: auto;
     padding: 15px;
 }
 
-/* TITLE */
 h2 {
     text-align: center;
 }
@@ -32,7 +30,6 @@ h2 {
     padding: 20px;
     border-radius: 18px;
     margin-top: 15px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
 }
 
 /* ROW */
@@ -40,15 +37,11 @@ h2 {
     display: flex;
     justify-content: space-between;
     margin: 12px 0;
-    font-size: 15px;
 }
 
-/* DISCOUNT */
-.discount {
-    color: lightgreen;
-}
-
-/* FINAL */
+/* COLORS */
+.discount { color: lightgreen; }
+.delivery { color: #00e676; }
 .final {
     font-size: 20px;
     font-weight: bold;
@@ -67,7 +60,6 @@ h2 {
     font-weight: bold;
 }
 
-/* COLORS */
 .upi {
     background: linear-gradient(90deg,#00c853,#2ecc71);
 }
@@ -76,21 +68,17 @@ h2 {
     background: linear-gradient(90deg,#ff9800,#ff5722);
 }
 
-/* NOTE */
 .note {
     text-align: center;
     font-size: 13px;
     margin-top: 10px;
-    opacity: 0.8;
 }
 
-/* BACK */
 .back {
     display: block;
     text-align: center;
     margin-top: 15px;
     color: white;
-    opacity: 0.7;
 }
 
 </style>
@@ -104,21 +92,30 @@ h2 {
 
 <div class="card">
 
-<!-- TOTAL -->
 <div class="row">
 <span>Total Amount</span>
 <span>₹{{ total }}</span>
 </div>
 
-<!-- DISCOUNT -->
+<div class="row">
+<span>Distance</span>
+<span>{{ distance }} km</span>
+</div>
+
+<div class="row delivery">
+<span>Delivery Charge</span>
+<span>₹{{ delivery }}</span>
+</div>
+
+{% if discount > 0 %}
 <div class="row discount">
-<span>Discount Applied</span>
+<span>Discount</span>
 <span>-₹{{ discount }}</span>
 </div>
+{% endif %}
 
 <hr>
 
-<!-- FINAL -->
 <div class="row final">
 <span>Final Payable</span>
 <span>₹{{ final_total }}</span>
@@ -126,19 +123,21 @@ h2 {
 
 </div>
 
-<!-- PAYMENT BUTTONS -->
-
-<a href="/success" class="btn upi">
+<!-- UPI -->
+<a class="btn upi"
+href="upi://pay?pa=8838145515@ybl&pn=GreenBasket&am={{ final_total }}&cu=INR">
 📱 Pay via UPI
 </a>
 
+<!-- COD -->
 <a href="/success" class="btn cod">
 💵 Cash on Delivery
 </a>
 
 <div class="note">
-✔️ Safe & Secure Payment
-✔️ Fast Delivery 🚚
+✔️ Secure Payment  
+✔️ Fast Delivery 🚚  
+✔️ No hidden charges
 </div>
 
 <a href="/cart" class="back">⬅ Back to Cart</a>
