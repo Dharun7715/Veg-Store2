@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
 import math
-from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -18,15 +17,6 @@ vegetables = [
     {"name": "Beetroot", "price": 50},
     {"name": "Cabbage", "price": 60}
 ]
-
-# ---------------- COUPONS ---------------- #
-COUPONS = {
-    "SAVE10": {"discount": 10, "min_order": 50, "expiry": "2026-12-31", "one_time": False},
-    "SAVE50": {"discount": 50, "min_order": 200, "expiry": "2026-12-31", "one_time": True},
-    "FREEDEL": {"discount": 0, "free_delivery": True, "min_order": 100, "expiry": "2026-12-31", "one_time": False}
-}
-
-USED_COUPONS = {}
 
 # ---------------- DATABASE ---------------- #
 def init_db():
@@ -65,75 +55,22 @@ def get_wallet(user):
     conn.close()
     return bal[0] if bal else 0
 
-# ---------------- DISTANCE ---------------- #
-def get_distance(lat1, lon1, lat2, lon2):
-    R = 6371
-    lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
-
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-
-    a = (math.sin(dlat/2)**2 +
-         math.cos(math.radians(lat1)) *
-         math.cos(math.radians(lat2)) *
-         math.sin(dlon/2)**2)
-
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    return R * c
-
-# ---------------- BEST COUPON ---------------- #
-def get_best_coupon(total, user):
-    best_discount = 0
-
-    for code, c in COUPONS.items():
-
-        if datetime.now().date() > datetime.strptime(c["expiry"], "%Y-%m-%d").date():
-            continue
-
-        if total < c.get("min_order", 0):
-            continue
-
-        if c.get("one_time"):
-            if user in USED_COUPONS and code in USED_COUPONS[user]:
-                continue
-
-        discount = c.get("discount", 0)
-
-        if discount > best_discount:
-            best_discount = discount
-
-    return best_discount
-
 # ---------------- LOGIN ---------------- #
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
         phone = request.form['phone']
-        session['temp_phone'] = phone
-        session['otp'] = phone[-4:]
-        return redirect('/otp')
+        session['user'] = phone
+        session['cart'] = {}
+
+        conn = sqlite3.connect("database.db")
+        cur = conn.cursor()
+        cur.execute("INSERT OR IGNORE INTO wallet (username,balance) VALUES (?,0)", (phone,))
+        conn.commit()
+        conn.close()
+
+        return redirect('/')
     return render_template("login.html")
-
-# ---------------- OTP ---------------- #
-@app.route('/otp', methods=['GET','POST'])
-def otp():
-    if request.method == 'POST':
-        if request.form['otp'] == session.get('otp'):
-            user = session.get('temp_phone')
-            session['user'] = user
-            session['cart'] = {}
-
-            conn = sqlite3.connect("database.db")
-            cur = conn.cursor()
-            cur.execute("INSERT OR IGNORE INTO wallet (username,balance) VALUES (?,?)", (user,0))
-            conn.commit()
-            conn.close()
-
-            return redirect('/')
-        else:
-            return "❌ Wrong OTP"
-
-    return render_template("verify.html", last4=session.get('otp'))
 
 # ---------------- HOME ---------------- #
 @app.route('/')
@@ -188,69 +125,46 @@ def cart():
 
     return render_template("cart.html", items=items, total=total)
 
-# ---------------- ADDRESS ---------------- #
-@app.route('/address', methods=['GET','POST'])
-def address():
-    if request.method == 'POST':
-        lat = float(request.form['lat'])
-        lng = float(request.form['lng'])
-        addr = request.form.get('address')
-
-        if abs(lat - 11.6943) < 0.03 and abs(lng - 77.9680) < 0.03:
-            session['lat'] = lat
-            session['lng'] = lng
-            session['address'] = addr
-            return redirect('/checkout')
-        else:
-            return "❌ Only Tharamangalam Delivery"
-
-    return render_template("address.html")
-
-# ---------------- APPLY COUPON ---------------- #
-@app.route('/apply_coupon', methods=['POST'])
-def apply_coupon():
-    code = request.form['coupon'].upper()
-    session['coupon'] = code
-    return redirect('/checkout')
-
 # ---------------- CHECKOUT ---------------- #
 @app.route('/checkout')
 def checkout():
-
-    if 'address' not in session:
-        return redirect('/address')
-
-    user = session.get("user")
-    user_lat = session.get("lat")
-    user_lng = session.get("lng")
-
-    if user_lat is None:
-        return redirect('/address')
-
     cart = session.get("cart", {})
     if not cart:
         return redirect('/')
 
     total = sum(v["price"] * qty for name, qty in cart.items() for v in vegetables if v["name"] == name)
-
-    distance = get_distance(11.6943, 77.9680, user_lat, user_lng)
-
-    delivery = 10 if distance <= 1 else 30 if distance <= 3 else 60
-
-    discount = get_best_coupon(total, user)
-
-    final_total = total + delivery - discount
-
-    wallet_balance = get_wallet(user)
+    delivery = 30
+    final_total = total + delivery
 
     return render_template("checkout.html",
         total=total,
         delivery=delivery,
-        distance=round(distance,2),
-        discount=discount,
         final_total=final_total,
-        wallet_balance=wallet_balance
+        wallet_balance=get_wallet(session.get("user"))
     )
+
+# ---------------- SUCCESS ---------------- #
+@app.route('/success')
+def success():
+    user = session.get("user")
+    cart = session.get("cart", {})
+
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+
+    for name, qty in cart.items():
+        for v in vegetables:
+            if v["name"] == name:
+                cur.execute(
+                    "INSERT INTO orders (username,item,quantity,total,status) VALUES (?,?,?,?,?)",
+                    (user, name, qty, v["price"] * qty, "Paid")
+                )
+
+    conn.commit()
+    conn.close()
+
+    session["cart"] = {}
+    return render_template("success.html")
 
 # ---------------- WALLET ---------------- #
 @app.route('/wallet')
@@ -274,17 +188,33 @@ def add_money():
 @app.route('/pay_wallet')
 def pay_wallet():
     user = session.get("user")
+    cart = session.get("cart", {})
+
+    total = sum(v["price"] * qty for name, qty in cart.items() for v in vegetables if v["name"] == name)
+    final = total + 30
+
     balance = get_wallet(user)
 
-    if balance < 50:
+    if balance < final:
         return "❌ Not enough balance"
 
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
-    cur.execute("UPDATE wallet SET balance = balance - 50 WHERE username=?", (user,))
+
+    cur.execute("UPDATE wallet SET balance = balance - ? WHERE username=?", (final, user))
+
+    for name, qty in cart.items():
+        for v in vegetables:
+            if v["name"] == name:
+                cur.execute(
+                    "INSERT INTO orders (username,item,quantity,total,status) VALUES (?,?,?,?,?)",
+                    (user, name, qty, v["price"] * qty, "Paid")
+                )
+
     conn.commit()
     conn.close()
 
+    session["cart"] = {}
     return render_template("success.html")
 
 # ---------------- ORDERS ---------------- #
@@ -305,16 +235,49 @@ def profile():
 # ---------------- ADMIN ---------------- #
 @app.route('/admin')
 def admin():
+
     if session.get("user") != ADMIN_PHONE:
         return "Access Denied ❌"
 
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
+
     cur.execute("SELECT * FROM orders")
-    data = cur.fetchall()
+    orders = cur.fetchall()
+
+    cur.execute("SELECT SUM(total) FROM orders WHERE status='Paid' OR status='Delivered'")
+    revenue = cur.fetchone()[0] or 0
+
     conn.close()
 
-    return render_template("admin.html", orders=data)
+    return render_template("admin.html", orders=orders, revenue=revenue)
+
+# ---------------- GRAPH DATA ---------------- #
+@app.route('/admin_data')
+def admin_data():
+
+    if session.get("user") != ADMIN_PHONE:
+        return jsonify({})
+
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+
+    cur.execute("SELECT item, SUM(quantity) FROM orders GROUP BY item")
+    items = cur.fetchall()
+
+    labels = [i[0] for i in items]
+    values = [i[1] for i in items]
+
+    cur.execute("SELECT SUM(total) FROM orders WHERE status='Paid' OR status='Delivered'")
+    revenue = cur.fetchone()[0] or 0
+
+    conn.close()
+
+    return jsonify({
+        "labels": labels,
+        "values": values,
+        "revenue": revenue
+    })
 
 # ---------------- LOGOUT ---------------- #
 @app.route('/logout')
