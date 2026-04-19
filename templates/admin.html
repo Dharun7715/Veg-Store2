@@ -4,95 +4,98 @@
 <title>Admin Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
+
 body {
     margin: 0;
     font-family: Arial;
-    background: linear-gradient(135deg, #2c3e50, #4ca1af);
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
     color: white;
 }
 
 .container {
-    max-width: 420px;
+    max-width: 800px;
     margin: auto;
     padding: 15px;
 }
 
+/* HEADER */
 h2 {
     text-align: center;
 }
 
-/* stats */
-.stats {
+/* TOP CARDS */
+.top {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
+    gap: 10px;
+    margin-top: 15px;
 }
 
-.box {
-    background: rgba(255,255,255,0.1);
-    padding: 12px;
-    border-radius: 12px;
-    width: 48%;
+.top .card {
+    flex: 1;
     text-align: center;
 }
 
-/* card */
+/* CARD */
 .card {
-    background: rgba(255,255,255,0.1);
-    padding: 12px;
-    margin: 12px 0;
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
-    animation: fadeIn 0.5s ease;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    padding: 18px;
+    border-radius: 15px;
+    margin-top: 15px;
 }
 
-select, button {
+/* ORDER */
+.order-title {
+    font-weight: bold;
+}
+
+.price {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+/* PROGRESS */
+.progress {
+    width: 100%;
+    height: 8px;
+    background: #ddd;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.bar {
+    height: 100%;
+    background: #2ecc71;
+    border-radius: 10px;
+}
+
+/* FORM */
+select {
     padding: 6px;
-    margin-top: 6px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: none;
 }
 
-/* button */
 button {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
     background: #2ecc71;
     color: white;
-    cursor: pointer;
+    margin-left: 5px;
 }
 
-button:hover {
-    background: #27ae60;
-}
-
-/* logout */
+/* LOGOUT */
 .logout {
     display: block;
     text-align: center;
-    margin-bottom: 10px;
-    color: white;
-    text-decoration: none;
+    margin-top: 10px;
+    color: #ff7675;
 }
 
-/* progress bar */
-.bar {
-    height: 8px;
-    margin-top: 6px;
-    border-radius: 5px;
-    background: #ccc;
-    overflow: hidden;
-}
-
-.fill {
-    height: 100%;
-    background: #2ecc71;
-}
-
-/* animation */
-@keyframes fadeIn {
-    from {opacity: 0; transform: translateY(20px);}
-    to {opacity: 1; transform: translateY(0);}
-}
 </style>
 </head>
 
@@ -102,61 +105,101 @@ button:hover {
 
 <h2>👑 Admin Dashboard</h2>
 
-<!-- LOGOUT -->
-<a href="/admin-logout" class="logout">🔓 Logout</a>
+<a href="/logout" class="logout">🔓 Logout</a>
 
-<!-- STATS -->
-<div class="stats">
-    <div class="box">
-        <h3>{{ total_orders }}</h3>
-        <p>Orders</p>
-    </div>
-    <div class="box">
-        <h3>₹{{ total_revenue }}</h3>
-        <p>Revenue</p>
-    </div>
+<!-- TOP STATS -->
+<div class="top">
+
+<div class="card">
+<h3>📦 Orders</h3>
+<h2>{{ orders|length }}</h2>
 </div>
 
-<!-- ORDERS -->
-{% for id, u, item, qty, total, status in orders %}
+<div class="card">
+<h3>💰 Revenue</h3>
+<h2>₹{{ revenue }}</h2>
+</div>
+
+</div>
+
+<!-- GRAPH -->
+<div class="card">
+<h3>📊 Orders Analytics</h3>
+<canvas id="ordersChart"></canvas>
+</div>
+
+<!-- ORDERS LIST -->
+{% for o in orders %}
+
 <div class="card">
 
-<p><b>{{ u }}</b></p>
-<p>{{ item }} × {{ qty }}</p>
-<p>₹{{ total }}</p>
-
-<!-- PROGRESS BAR -->
-<div class="bar">
-    <div class="fill" style="
-        width:
-        {% if status == 'Pending' %}30%
-        {% elif status == 'Out for Delivery' %}70%
-        {% else %}100%
-        {% endif %}
-    "></div>
+<div class="order-title">
+👤 {{ o[1] }}
 </div>
 
-<!-- STATUS UPDATE -->
-<form method="POST">
-<input type="hidden" name="id" value="{{ id }}">
+<p>{{ o[2] }} × {{ o[3] }}</p>
+
+<p class="price">₹{{ o[4] }}</p>
+
+<!-- PROGRESS -->
+<div class="progress">
+<div class="bar"
+style="width:
+{% if o[5]=='Pending' %}25%
+{% elif o[5]=='Out for Delivery' %}60%
+{% elif o[5]=='Delivered' %}100%
+{% else %}40%
+{% endif %}
+"></div>
+</div>
+
+<br>
+
+<form method="POST" action="/update_status">
+
+<input type="hidden" name="id" value="{{ o[0] }}">
 
 <select name="status">
-<option {% if status=='Pending' %}selected{% endif %}>Pending</option>
-<option {% if status=='Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
-<option {% if status=='Delivered' %}selected{% endif %}>Delivered</option>
+<option>Pending</option>
+<option>Out for Delivery</option>
+<option>Delivered</option>
 </select>
 
 <button>Update</button>
+
 </form>
 
 </div>
+
 {% endfor %}
 
-<a href="/" style="display:block;text-align:center;margin-top:15px;color:white;">
-⬅ Back to Home
-</a>
-
 </div>
+
+<script>
+
+fetch('/admin_data')
+.then(res => res.json())
+.then(data => {
+
+    const ctx = document.getElementById('ordersChart');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Orders',
+                data: data.values
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+
+});
+
+</script>
 
 </body>
 </html>
