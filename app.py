@@ -33,7 +33,6 @@ def init_db():
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
 
-    # orders
     cur.execute("""
     CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +44,6 @@ def init_db():
     )
     """)
 
-    # wallet
     cur.execute("""
     CREATE TABLE IF NOT EXISTS wallet (
         username TEXT PRIMARY KEY,
@@ -86,7 +84,6 @@ def get_distance(lat1, lon1, lat2, lon2):
 # ---------------- BEST COUPON ---------------- #
 def get_best_coupon(total, user):
     best_discount = 0
-    best_code = None
 
     for code, c in COUPONS.items():
 
@@ -104,9 +101,8 @@ def get_best_coupon(total, user):
 
         if discount > best_discount:
             best_discount = discount
-            best_code = code
 
-    return best_code, best_discount
+    return best_discount
 
 # ---------------- LOGIN ---------------- #
 @app.route('/login', methods=['GET','POST'])
@@ -127,7 +123,6 @@ def otp():
             session['user'] = user
             session['cart'] = {}
 
-            # create wallet
             conn = sqlite3.connect("database.db")
             cur = conn.cursor()
             cur.execute("INSERT OR IGNORE INTO wallet (username,balance) VALUES (?,?)", (user,0))
@@ -215,21 +210,6 @@ def address():
 @app.route('/apply_coupon', methods=['POST'])
 def apply_coupon():
     code = request.form['coupon'].upper()
-    user = session.get("user")
-
-    if code not in COUPONS:
-        session['coupon'] = None
-        return redirect('/checkout')
-
-    c = COUPONS[code]
-
-    if datetime.now().date() > datetime.strptime(c["expiry"], "%Y-%m-%d").date():
-        return "❌ Coupon expired"
-
-    if c.get("one_time"):
-        if user in USED_COUPONS and code in USED_COUPONS[user]:
-            return "❌ Already used"
-
     session['coupon'] = code
     return redirect('/checkout')
 
@@ -244,7 +224,7 @@ def checkout():
     user_lat = session.get("lat")
     user_lng = session.get("lng")
 
-    if user_lat is None or user_lng is None:
+    if user_lat is None:
         return redirect('/address')
 
     cart = session.get("cart", {})
@@ -253,23 +233,11 @@ def checkout():
 
     total = sum(v["price"] * qty for name, qty in cart.items() for v in vegetables if v["name"] == name)
 
-    store_lat, store_lng = 11.6943, 77.9680
-    distance = get_distance(store_lat, store_lng, user_lat, user_lng)
+    distance = get_distance(11.6943, 77.9680, user_lat, user_lng)
 
     delivery = 10 if distance <= 1 else 30 if distance <= 3 else 60
 
-    coupon_code = session.get("coupon")
-    discount = 0
-
-    if not coupon_code:
-        best_code, best_discount = get_best_coupon(total, user)
-        discount = best_discount
-    else:
-        c = COUPONS.get(coupon_code)
-        if c and total >= c.get("min_order", 0):
-            discount = c.get("discount", 0)
-            if c.get("free_delivery"):
-                delivery = 0
+    discount = get_best_coupon(total, user)
 
     final_total = total + delivery - discount
 
@@ -284,52 +252,11 @@ def checkout():
         wallet_balance=wallet_balance
     )
 
-# ---------------- PAY USING WALLET ---------------- #
-@app.route('/pay_wallet')
-def pay_wallet():
-
-    user = session.get("user")
-    cart = session.get("cart", {})
-
-    if not cart:
-        return redirect('/')
-
-    total = sum(v["price"] * qty for name, qty in cart.items() for v in vegetables if v["name"] == name)
-
-    delivery = 30
-    final = total + delivery
-
-    balance = get_wallet(user)
-
-    if balance < final:
-        return "❌ Not enough balance"
-
-    conn = sqlite3.connect("database.db")
-    cur = conn.cursor()
-
-    cur.execute("UPDATE wallet SET balance = balance - ? WHERE username=?", (final, user))
-
-    for name, qty in cart.items():
-        for v in vegetables:
-            if v["name"] == name:
-                cur.execute("INSERT INTO orders (username,item,quantity,total,status) VALUES (?,?,?,?,?)",
-                            (user, name, qty, v["price"] * qty, "Paid"))
-
-    conn.commit()
-    conn.close()
-
-    session["cart"] = {}
-
-    return render_template("success.html")
-
-# ---------------- WALLET PAGE ---------------- #
+# ---------------- WALLET ---------------- #
 @app.route('/wallet')
 def wallet():
-    user = session.get("user")
-    balance = get_wallet(user)
-    return render_template("wallet.html", balance=balance)
+    return render_template("wallet.html", balance=get_wallet(session.get("user")))
 
-# ---------------- ADD MONEY ---------------- #
 @app.route('/add_money', methods=['POST'])
 def add_money():
     amount = int(request.form['amount'])
@@ -343,12 +270,51 @@ def add_money():
 
     return redirect('/wallet')
 
-# ---------------- SUCCESS ---------------- #
-@app.route('/success')
-def success():
-    session["cart"] = {}
-    session["coupon"] = None
+# ---------------- PAY WALLET ---------------- #
+@app.route('/pay_wallet')
+def pay_wallet():
+    user = session.get("user")
+    balance = get_wallet(user)
+
+    if balance < 50:
+        return "❌ Not enough balance"
+
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+    cur.execute("UPDATE wallet SET balance = balance - 50 WHERE username=?", (user,))
+    conn.commit()
+    conn.close()
+
     return render_template("success.html")
+
+# ---------------- ORDERS ---------------- #
+@app.route('/orders')
+def orders():
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+    cur.execute("SELECT item,quantity,total,status FROM orders WHERE username=?", (session.get("user"),))
+    data = cur.fetchall()
+    conn.close()
+    return render_template("orders.html", orders=data)
+
+# ---------------- PROFILE ---------------- #
+@app.route('/profile')
+def profile():
+    return render_template("profile.html", user=session.get("user"))
+
+# ---------------- ADMIN ---------------- #
+@app.route('/admin')
+def admin():
+    if session.get("user") != ADMIN_PHONE:
+        return "Access Denied ❌"
+
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM orders")
+    data = cur.fetchall()
+    conn.close()
+
+    return render_template("admin.html", orders=data)
 
 # ---------------- LOGOUT ---------------- #
 @app.route('/logout')
