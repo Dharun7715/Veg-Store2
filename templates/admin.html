@@ -4,6 +4,7 @@
 <title>Admin Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -16,12 +17,11 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 900px;
     margin: auto;
     padding: 15px;
 }
 
-/* HEADER */
 h2 {
     text-align: center;
 }
@@ -33,62 +33,35 @@ h2 {
     margin-top: 15px;
 }
 
-.top .card {
+.card {
     flex: 1;
+    background: rgba(255,255,255,0.12);
+    padding: 18px;
+    border-radius: 15px;
     text-align: center;
 }
 
-/* CARD */
-.card {
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(12px);
-    padding: 18px;
-    border-radius: 15px;
+/* GRAPH */
+.graph-box {
+    background: rgba(255,255,255,0.1);
     margin-top: 15px;
+    padding: 15px;
+    border-radius: 15px;
 }
 
-/* ORDER */
-.order-title {
-    font-weight: bold;
-}
-
-.price {
-    color: #2ecc71;
-    font-weight: bold;
-}
-
-/* PROGRESS */
-.progress {
-    width: 100%;
-    height: 8px;
-    background: #ddd;
+canvas {
+    background: white;
     border-radius: 10px;
     margin-top: 10px;
 }
 
-.bar {
-    height: 100%;
-    background: #2ecc71;
-    border-radius: 10px;
+/* ERROR TEXT */
+.error {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
 }
 
-/* FORM */
-select {
-    padding: 6px;
-    border-radius: 8px;
-    border: none;
-}
-
-button {
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: none;
-    background: #2ecc71;
-    color: white;
-    margin-left: 5px;
-}
-
-/* LOGOUT */
 .logout {
     display: block;
     text-align: center;
@@ -107,7 +80,7 @@ button {
 
 <a href="/logout" class="logout">🔓 Logout</a>
 
-<!-- TOP STATS -->
+<!-- TOP -->
 <div class="top">
 
 <div class="card">
@@ -122,56 +95,19 @@ button {
 
 </div>
 
-<!-- GRAPH -->
-<div class="card">
+<!-- BAR GRAPH -->
+<div class="graph-box">
 <h3>📊 Orders Analytics</h3>
 <canvas id="ordersChart"></canvas>
 </div>
 
-<!-- ORDERS LIST -->
-{% for o in orders %}
-
-<div class="card">
-
-<div class="order-title">
-👤 {{ o[1] }}
+<!-- LINE GRAPH -->
+<div class="graph-box">
+<h3>📈 Revenue Trend</h3>
+<canvas id="revenueChart"></canvas>
 </div>
 
-<p>{{ o[2] }} × {{ o[3] }}</p>
-
-<p class="price">₹{{ o[4] }}</p>
-
-<!-- PROGRESS -->
-<div class="progress">
-<div class="bar"
-style="width:
-{% if o[5]=='Pending' %}25%
-{% elif o[5]=='Out for Delivery' %}60%
-{% elif o[5]=='Delivered' %}100%
-{% else %}40%
-{% endif %}
-"></div>
-</div>
-
-<br>
-
-<form method="POST" action="/update_status">
-
-<input type="hidden" name="id" value="{{ o[0] }}">
-
-<select name="status">
-<option>Pending</option>
-<option>Out for Delivery</option>
-<option>Delivered</option>
-</select>
-
-<button>Update</button>
-
-</form>
-
-</div>
-
-{% endfor %}
+<div id="errorMsg" class="error"></div>
 
 </div>
 
@@ -181,9 +117,16 @@ fetch('/admin_data')
 .then(res => res.json())
 .then(data => {
 
-    const ctx = document.getElementById('ordersChart');
+    console.log("DATA:", data);
 
-    new Chart(ctx, {
+    // ❌ If no data
+    if (!data || data.labels.length === 0) {
+        document.getElementById("errorMsg").innerText = "⚠️ No data available";
+        return;
+    }
+
+    // 📊 BAR CHART
+    new Chart(document.getElementById('ordersChart'), {
         type: 'bar',
         data: {
             labels: data.labels,
@@ -191,12 +134,26 @@ fetch('/admin_data')
                 label: 'Orders',
                 data: data.values
             }]
-        },
-        options: {
-            responsive: true
         }
     });
 
+    // 📈 LINE CHART
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: data.daily_labels,
+            datasets: [{
+                label: 'Revenue ₹',
+                data: data.daily_values,
+                tension: 0.3
+            }]
+        }
+    });
+
+})
+.catch(err => {
+    console.log("ERROR:", err);
+    document.getElementById("errorMsg").innerText = "❌ Graph load failed";
 });
 
 </script>
