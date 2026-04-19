@@ -13,12 +13,14 @@ body {
     color: white;
 }
 
+/* CONTAINER */
 .container {
     max-width: 420px;
     margin: auto;
     padding: 15px;
 }
 
+/* TITLE */
 h2 {
     text-align: center;
 }
@@ -30,6 +32,7 @@ h2 {
     padding: 20px;
     border-radius: 18px;
     margin-top: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
 }
 
 /* ROW */
@@ -37,6 +40,7 @@ h2 {
     display: flex;
     justify-content: space-between;
     margin: 12px 0;
+    font-size: 15px;
 }
 
 /* COLORS */
@@ -60,6 +64,7 @@ h2 {
     font-weight: bold;
 }
 
+/* PAYMENT COLORS */
 .upi {
     background: linear-gradient(90deg,#00c853,#2ecc71);
 }
@@ -68,17 +73,40 @@ h2 {
     background: linear-gradient(90deg,#ff9800,#ff5722);
 }
 
+/* COUPON BOX */
+.coupon-box input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    margin-top: 10px;
+}
+
+.coupon-box button {
+    width: 100%;
+    margin-top: 10px;
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+/* NOTE */
 .note {
     text-align: center;
     font-size: 13px;
     margin-top: 10px;
+    opacity: 0.8;
 }
 
+/* BACK */
 .back {
     display: block;
     text-align: center;
     margin-top: 15px;
     color: white;
+    opacity: 0.7;
 }
 
 </style>
@@ -90,6 +118,15 @@ h2 {
 
 <h2>💳 Checkout</h2>
 
+<!-- COUPON APPLY -->
+<div class="card coupon-box">
+<form method="POST" action="/apply_coupon">
+<input type="text" name="coupon" placeholder="Enter coupon code">
+<button type="submit">Apply Coupon</button>
+</form>
+</div>
+
+<!-- BILL DETAILS -->
 <div class="card">
 
 <div class="row">
@@ -105,6 +142,11 @@ h2 {
 <div class="row delivery">
 <span>Delivery Charge</span>
 <span>₹{{ delivery }}</span>
+</div>
+
+<div class="row">
+<span>Coupon Status</span>
+<span>{{ discount > 0 and "Applied ✅" or "None ❌" }}</span>
 </div>
 
 {% if discount > 0 %}
@@ -137,7 +179,7 @@ href="upi://pay?pa=8838145515@ybl&pn=GreenBasket&am={{ final_total }}&cu=INR">
 <div class="note">
 ✔️ Secure Payment  
 ✔️ Fast Delivery 🚚  
-✔️ No hidden charges
+✔️ Best price guaranteed  
 </div>
 
 <a href="/cart" class="back">⬅ Back to Cart</a>
