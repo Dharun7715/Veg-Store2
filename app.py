@@ -37,9 +37,15 @@ def init_db():
 
 init_db()
 
-# ---------------- DISTANCE ---------------- #
+# ---------------- DISTANCE FUNCTION ---------------- #
 def get_distance(lat1, lon1, lat2, lon2):
-    R = 6371
+    R = 6371  # Earth radius in KM
+
+    lat1 = float(lat1)
+    lon1 = float(lon1)
+    lat2 = float(lat2)
+    lon2 = float(lon2)
+
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
 
@@ -57,7 +63,7 @@ def login():
     if request.method == 'POST':
         phone = request.form['phone']
         session['temp_phone'] = phone
-        session['otp'] = phone[-4:]
+        session['otp'] = phone[-4:]  # simple OTP
         return redirect('/otp')
     return render_template("login.html")
 
@@ -86,7 +92,7 @@ def home():
         is_admin=(session.get("user") == ADMIN_PHONE)
     )
 
-# ---------------- CART AJAX ---------------- #
+# ---------------- CART (AJAX) ---------------- #
 @app.route('/add/<name>')
 def add(name):
     cart = session.get("cart", {})
@@ -138,15 +144,16 @@ def address():
     if request.method == 'POST':
         lat = float(request.form['lat'])
         lng = float(request.form['lng'])
+        addr = request.form.get('address')
 
-        # Allow only Tharamangalam radius
+        # Allow only Tharamangalam area
         if abs(lat - 11.6943) < 0.03 and abs(lng - 77.9680) < 0.03:
             session['lat'] = lat
             session['lng'] = lng
-            session['address'] = request.form.get('address')
+            session['address'] = addr
             return redirect('/checkout')
         else:
-            return "❌ Only Tharamangalam Delivery"
+            return "<h2 style='color:red;text-align:center;'>❌ Only Tharamangalam Delivery</h2>"
 
     return render_template("address.html")
 
@@ -154,10 +161,21 @@ def address():
 @app.route('/checkout')
 def checkout():
 
+    # Must select address
     if 'address' not in session:
         return redirect('/address')
 
+    user_lat = session.get("lat")
+    user_lng = session.get("lng")
+
+    # Safety check
+    if user_lat is None or user_lng is None:
+        return redirect('/address')
+
     cart = session.get("cart", {})
+    if not cart:
+        return redirect('/')
+
     total = 0
 
     for name, qty in cart.items():
@@ -165,16 +183,14 @@ def checkout():
             if v["name"] == name:
                 total += v["price"] * qty
 
-    # STORE LOCATION
+    # Store location
     store_lat = 11.6943
     store_lng = 77.9680
 
-    user_lat = session.get("lat")
-    user_lng = session.get("lng")
-
+    # Distance
     distance = get_distance(store_lat, store_lng, user_lat, user_lng)
 
-    # DELIVERY CHARGE
+    # Delivery charge
     if distance <= 1:
         delivery = 10
     elif distance <= 3:
@@ -182,12 +198,18 @@ def checkout():
     else:
         delivery = 60
 
-    final_total = total + delivery
+    # Discount
+    discount = 0
+    if total > 200:
+        discount = 20
+
+    final_total = total + delivery - discount
 
     return render_template("checkout.html",
         total=total,
         delivery=delivery,
         distance=round(distance,2),
+        discount=discount,
         final_total=final_total
     )
 
