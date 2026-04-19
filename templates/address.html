@@ -6,6 +6,7 @@
 
 <!-- LEAFLET -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
 <style>
 
@@ -18,18 +19,18 @@ body {
 }
 
 h2 {
-    margin-top: 10px;
+    margin: 10px;
 }
 
 #map {
-    height: 400px;
+    height: 420px;
     margin: 10px;
     border-radius: 15px;
 }
 
 #selected {
-    margin-top: 10px;
     font-size: 14px;
+    margin-top: 8px;
 }
 
 button {
@@ -38,8 +39,8 @@ button {
     border: none;
     background: green;
     color: white;
-    margin-top: 10px;
     font-size: 16px;
+    margin-top: 10px;
 }
 
 </style>
@@ -61,12 +62,9 @@ button {
 <button type="submit">Confirm Location</button>
 </form>
 
-<!-- LEAFLET -->
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-
 <script>
 
-// DEFAULT CENTER (THARAMANGALAM)
+// 🟢 STORE LOCATION (THARAMANGALAM)
 let centerLat = 11.6943;
 let centerLng = 77.9680;
 
@@ -85,7 +83,6 @@ let circle = L.circle([centerLat, centerLng], {
     fillOpacity: 0.2,
     radius: 3000
 }).addTo(map);
-
 
 // 🔥 AUTO CURRENT LOCATION
 if (navigator.geolocation) {
@@ -121,19 +118,17 @@ if (navigator.geolocation) {
         });
 
     }, function(){
-        document.getElementById("selected").innerHTML =
-            "❌ Location access denied";
+        document.getElementById("selected").innerHTML = "❌ Location access denied";
     });
 }
 
-
-// 🖱️ CLICK SELECT
+// 🖱️ CLICK TO SELECT
 map.on('click', function(e){
 
     let lat = e.latlng.lat;
     let lng = e.latlng.lng;
 
-    // 🔥 RADIUS CHECK
+    // ❌ OUTSIDE DELIVERY CHECK
     let distance = map.distance([centerLat, centerLng], [lat, lng]);
 
     if(distance > 3000){
