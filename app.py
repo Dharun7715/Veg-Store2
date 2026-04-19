@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
-import math
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -23,6 +23,7 @@ def init_db():
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
 
+    # Orders table (with created_at for daily graph)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,10 +31,12 @@ def init_db():
         item TEXT,
         quantity INTEGER,
         total INTEGER,
-        status TEXT DEFAULT 'Pending'
+        status TEXT DEFAULT 'Pending',
+        created_at TEXT
     )
     """)
 
+    # Wallet table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS wallet (
         username TEXT PRIMARY KEY,
@@ -51,9 +54,9 @@ def get_wallet(user):
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
     cur.execute("SELECT balance FROM wallet WHERE username=?", (user,))
-    bal = cur.fetchone()
+    row = cur.fetchone()
     conn.close()
-    return bal[0] if bal else 0
+    return row[0] if row else 0
 
 # ---------------- LOGIN ---------------- #
 @app.route('/login', methods=['GET','POST'])
@@ -132,7 +135,9 @@ def checkout():
     if not cart:
         return redirect('/')
 
-    total = sum(v["price"] * qty for name, qty in cart.items() for v in vegetables if v["name"] == name)
+    total = sum(v["price"] * qty for name, qty in cart.items()
+                for v in vegetables if v["name"] == name)
+
     delivery = 30
     final_total = total + delivery
 
@@ -143,7 +148,7 @@ def checkout():
         wallet_balance=get_wallet(session.get("user"))
     )
 
-# ---------------- SUCCESS ---------------- #
+# ---------------- SUCCESS (SAVE ORDER) ---------------- #
 @app.route('/success')
 def success():
     user = session.get("user")
@@ -152,13 +157,15 @@ def success():
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
 
+    now = datetime.now().strftime("%Y-%m-%d")
+
     for name, qty in cart.items():
         for v in vegetables:
             if v["name"] == name:
-                cur.execute(
-                    "INSERT INTO orders (username,item,quantity,total,status) VALUES (?,?,?,?,?)",
-                    (user, name, qty, v["price"] * qty, "Paid")
-                )
+                cur.execute("""
+                    INSERT INTO orders (username,item,quantity,total,status,created_at)
+                    VALUES (?,?,?,?,?,?)
+                """, (user, name, qty, v["price"] * qty, "Paid", now))
 
     conn.commit()
     conn.close()
@@ -184,15 +191,15 @@ def add_money():
 
     return redirect('/wallet')
 
-# ---------------- PAY WALLET ---------------- #
 @app.route('/pay_wallet')
 def pay_wallet():
     user = session.get("user")
     cart = session.get("cart", {})
 
-    total = sum(v["price"] * qty for name, qty in cart.items() for v in vegetables if v["name"] == name)
-    final = total + 30
+    total = sum(v["price"] * qty for name, qty in cart.items()
+                for v in vegetables if v["name"] == name)
 
+    final = total + 30
     balance = get_wallet(user)
 
     if balance < final:
@@ -203,13 +210,15 @@ def pay_wallet():
 
     cur.execute("UPDATE wallet SET balance = balance - ? WHERE username=?", (final, user))
 
+    now = datetime.now().strftime("%Y-%m-%d")
+
     for name, qty in cart.items():
         for v in vegetables:
             if v["name"] == name:
-                cur.execute(
-                    "INSERT INTO orders (username,item,quantity,total,status) VALUES (?,?,?,?,?)",
-                    (user, name, qty, v["price"] * qty, "Paid")
-                )
+                cur.execute("""
+                    INSERT INTO orders (username,item,quantity,total,status,created_at)
+                    VALUES (?,?,?,?,?,?)
+                """, (user, name, qty, v["price"] * qty, "Paid", now))
 
     conn.commit()
     conn.close()
@@ -235,7 +244,6 @@ def profile():
 # ---------------- ADMIN ---------------- #
 @app.route('/admin')
 def admin():
-
     if session.get("user") != ADMIN_PHONE:
         return "Access Denied ❌"
 
@@ -252,31 +260,41 @@ def admin():
 
     return render_template("admin.html", orders=orders, revenue=revenue)
 
-# ---------------- GRAPH DATA ---------------- #
+# ---------------- GRAPH DATA (BAR + LINE) ---------------- #
 @app.route('/admin_data')
 def admin_data():
-
     if session.get("user") != ADMIN_PHONE:
         return jsonify({})
 
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
 
+    # Bar chart (orders per item)
     cur.execute("SELECT item, SUM(quantity) FROM orders GROUP BY item")
     items = cur.fetchall()
-
     labels = [i[0] for i in items]
     values = [i[1] for i in items]
 
-    cur.execute("SELECT SUM(total) FROM orders WHERE status='Paid' OR status='Delivered'")
-    revenue = cur.fetchone()[0] or 0
+    # Line chart (daily revenue)
+    cur.execute("""
+        SELECT created_at, SUM(total)
+        FROM orders
+        WHERE status='Paid' OR status='Delivered'
+        GROUP BY created_at
+        ORDER BY created_at
+    """)
+    daily = cur.fetchall()
+
+    daily_labels = [i[0] for i in daily]
+    daily_values = [i[1] for i in daily]
 
     conn.close()
 
     return jsonify({
         "labels": labels,
         "values": values,
-        "revenue": revenue
+        "daily_labels": daily_labels,
+        "daily_values": daily_values
     })
 
 # ---------------- LOGOUT ---------------- #
