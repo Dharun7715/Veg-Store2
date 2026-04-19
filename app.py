@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
+import math
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -36,29 +37,40 @@ def init_db():
 
 init_db()
 
-# ---------------- LOGIN (OTP) ---------------- #
+# ---------------- DISTANCE ---------------- #
+def get_distance(lat1, lon1, lat2, lon2):
+    R = 6371
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    a = (math.sin(dlat/2)**2 +
+         math.cos(math.radians(lat1)) *
+         math.cos(math.radians(lat2)) *
+         math.sin(dlon/2)**2)
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R * c
+
+# ---------------- LOGIN ---------------- #
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
         phone = request.form['phone']
         session['temp_phone'] = phone
-        session['otp'] = phone[-4:]   # last 4 digits
+        session['otp'] = phone[-4:]
         return redirect('/otp')
-
     return render_template("login.html")
 
+# ---------------- OTP ---------------- #
 @app.route('/otp', methods=['GET','POST'])
 def otp():
     if request.method == 'POST':
-        user_otp = request.form['otp']
-
-        if user_otp == session.get('otp'):
+        if request.form['otp'] == session.get('otp'):
             session['user'] = session.get('temp_phone')
             session['cart'] = {}
             return redirect('/')
         else:
-            return "<h2 style='color:red;text-align:center;'>❌ Wrong OTP</h2>"
-
+            return "❌ Wrong OTP"
     return render_template("verify.html", last4=session.get('otp'))
 
 # ---------------- HOME ---------------- #
@@ -67,21 +79,19 @@ def home():
     if 'user' not in session:
         return redirect('/login')
 
-    cart = session.get("cart", {})
     return render_template("index.html",
         vegetables=vegetables,
-        cart=cart,
-        cart_count=sum(cart.values()),
-        is_admin=(session.get("user")==ADMIN_PHONE)
+        cart=session.get("cart", {}),
+        cart_count=sum(session.get("cart", {}).values()),
+        is_admin=(session.get("user") == ADMIN_PHONE)
     )
 
-# ---------------- AJAX CART ---------------- #
+# ---------------- CART AJAX ---------------- #
 @app.route('/add/<name>')
 def add(name):
     cart = session.get("cart", {})
     cart[name] = cart.get(name, 0) + 1
     session["cart"] = cart
-    session.modified = True
     return jsonify({"qty": cart[name], "cart_count": sum(cart.values())})
 
 @app.route('/increase/<name>')
@@ -89,7 +99,6 @@ def increase(name):
     cart = session.get("cart", {})
     cart[name] += 1
     session["cart"] = cart
-    session.modified = True
     return jsonify({"qty": cart[name], "cart_count": sum(cart.values())})
 
 @app.route('/decrease/<name>')
@@ -100,7 +109,6 @@ def decrease(name):
     else:
         cart.pop(name)
     session["cart"] = cart
-    session.modified = True
     return jsonify({"qty": cart.get(name, 0), "cart_count": sum(cart.values())})
 
 # ---------------- CART PAGE ---------------- #
@@ -131,18 +139,23 @@ def address():
         lat = float(request.form['lat'])
         lng = float(request.form['lng'])
 
+        # Allow only Tharamangalam radius
         if abs(lat - 11.6943) < 0.03 and abs(lng - 77.9680) < 0.03:
-            session['address'] = f"{lat},{lng}"
-            return redirect('/payment')
+            session['lat'] = lat
+            session['lng'] = lng
+            session['address'] = request.form.get('address')
+            return redirect('/checkout')
         else:
-            return "<h2 style='color:red;text-align:center;'>❌ Only Tharamangalam Delivery</h2>"
+            return "❌ Only Tharamangalam Delivery"
 
     return render_template("address.html")
 
-# ---------------- PAYMENT ---------------- #
-@app.route('/payment')
+# ---------------- CHECKOUT ---------------- #
 @app.route('/checkout')
-def payment():
+def checkout():
+
+    if 'address' not in session:
+        return redirect('/address')
 
     cart = session.get("cart", {})
     total = 0
@@ -152,25 +165,29 @@ def payment():
             if v["name"] == name:
                 total += v["price"] * qty
 
-    discount = 0
+    # STORE LOCATION
+    store_lat = 11.6943
+    store_lng = 77.9680
 
-    if total >= 300:
-        discount += 50
+    user_lat = session.get("lat")
+    user_lng = session.get("lng")
 
-    conn = sqlite3.connect("database.db")
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM orders WHERE username=?", (session.get("user"),))
-    count = cur.fetchone()[0]
-    conn.close()
+    distance = get_distance(store_lat, store_lng, user_lat, user_lng)
 
-    if count == 0:
-        discount += 100
+    # DELIVERY CHARGE
+    if distance <= 1:
+        delivery = 10
+    elif distance <= 3:
+        delivery = 30
+    else:
+        delivery = 60
 
-    final_total = max(total - discount, 0)
+    final_total = total + delivery
 
-    return render_template("payment.html",
+    return render_template("checkout.html",
         total=total,
-        discount=discount,
+        delivery=delivery,
+        distance=round(distance,2),
         final_total=final_total
     )
 
