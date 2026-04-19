@@ -13,14 +13,12 @@ body {
     color: white;
 }
 
-/* CONTAINER */
 .container {
     max-width: 420px;
     margin: auto;
     padding: 15px;
 }
 
-/* TITLE */
 h2 {
     text-align: center;
 }
@@ -32,7 +30,6 @@ h2 {
     padding: 20px;
     border-radius: 18px;
     margin-top: 15px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
 }
 
 /* ROW */
@@ -40,10 +37,8 @@ h2 {
     display: flex;
     justify-content: space-between;
     margin: 12px 0;
-    font-size: 15px;
 }
 
-/* COLORS */
 .discount { color: lightgreen; }
 .delivery { color: #00e676; }
 .final {
@@ -60,20 +55,16 @@ h2 {
     border-radius: 15px;
     text-align: center;
     text-decoration: none;
-    margin-top: 15px;
+    margin-top: 12px;
     font-weight: bold;
 }
 
-/* PAYMENT COLORS */
-.upi {
-    background: linear-gradient(90deg,#00c853,#2ecc71);
-}
+/* COLORS */
+.upi { background: linear-gradient(90deg,#00c853,#2ecc71); }
+.cod { background: linear-gradient(90deg,#ff9800,#ff5722); }
+.wallet { background: linear-gradient(90deg,#8e44ad,#9b59b6); }
 
-.cod {
-    background: linear-gradient(90deg,#ff9800,#ff5722);
-}
-
-/* COUPON BOX */
+/* COUPON */
 .coupon-box input {
     width: 100%;
     padding: 10px;
@@ -92,21 +83,17 @@ h2 {
     border-radius: 10px;
 }
 
-/* NOTE */
 .note {
     text-align: center;
     font-size: 13px;
     margin-top: 10px;
-    opacity: 0.8;
 }
 
-/* BACK */
 .back {
     display: block;
     text-align: center;
     margin-top: 15px;
     color: white;
-    opacity: 0.7;
 }
 
 </style>
@@ -118,7 +105,7 @@ h2 {
 
 <h2>💳 Checkout</h2>
 
-<!-- COUPON APPLY -->
+<!-- 🎟️ COUPON -->
 <div class="card coupon-box">
 <form method="POST" action="/apply_coupon">
 <input type="text" name="coupon" placeholder="Enter coupon code">
@@ -126,7 +113,7 @@ h2 {
 </form>
 </div>
 
-<!-- BILL DETAILS -->
+<!-- BILL -->
 <div class="card">
 
 <div class="row">
@@ -145,8 +132,8 @@ h2 {
 </div>
 
 <div class="row">
-<span>Coupon Status</span>
-<span>{{ discount > 0 and "Applied ✅" or "None ❌" }}</span>
+<span>Coupon</span>
+<span>{{ discount > 0 and "Applied ✅" or "Auto/None ❌" }}</span>
 </div>
 
 {% if discount > 0 %}
@@ -165,13 +152,18 @@ h2 {
 
 </div>
 
-<!-- UPI -->
+<!-- 💰 WALLET -->
+<a href="/pay_wallet" class="btn wallet">
+💰 Pay using Wallet (₹{{ wallet_balance }})
+</a>
+
+<!-- 📱 UPI -->
 <a class="btn upi"
 href="upi://pay?pa=8838145515@ybl&pn=GreenBasket&am={{ final_total }}&cu=INR">
 📱 Pay via UPI
 </a>
 
-<!-- COD -->
+<!-- 💵 COD -->
 <a href="/success" class="btn cod">
 💵 Cash on Delivery
 </a>
@@ -179,7 +171,7 @@ href="upi://pay?pa=8838145515@ybl&pn=GreenBasket&am={{ final_total }}&cu=INR">
 <div class="note">
 ✔️ Secure Payment  
 ✔️ Fast Delivery 🚚  
-✔️ Best price guaranteed  
+✔️ Best offers applied  
 </div>
 
 <a href="/cart" class="back">⬅ Back to Cart</a>
