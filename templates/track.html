@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Live Tracking</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+}
+
+#map {
+    height: 90vh;
+}
+
+h2 {
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📍 Live Delivery Tracking</h2>
+<div id="map"></div>
+
+<script>
+
+// 🏪 Store location (example)
+let store = [13.0827, 80.2707];
+
+// 🏠 User location (example)
+let user = [13.0900, 80.2800];
+
+// 🗺️ Map
+let map = L.map('map').setView(store, 14);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+.addTo(map);
+
+// 📍 Markers
+let storeMarker = L.marker(store).addTo(map).bindPopup("Store");
+let userMarker = L.marker(user).addTo(map).bindPopup("You");
+
+// 🚚 Delivery marker
+let delivery = L.marker(store).addTo(map).bindPopup("Delivery Boy");
+
+// 📏 Route line
+let route = L.polyline([store, user], {color: 'blue'}).addTo(map);
+
+// 🔥 MOVEMENT SIMULATION
+let steps = 50;
+let latStep = (user[0] - store[0]) / steps;
+let lngStep = (user[1] - store[1]) / steps;
+
+let current = [...store];
+
+let i = 0;
+
+let interval = setInterval(() => {
+
+    if (i >= steps) {
+        clearInterval(interval);
+        delivery.bindPopup("Delivered ✅").openPopup();
+        return;
+    }
+
+    current[0] += latStep;
+    current[1] += lngStep;
+
+    delivery.setLatLng(current);
+
+    i++;
+
+}, 500);
+
+</script>
+
+</body>
+</html>
