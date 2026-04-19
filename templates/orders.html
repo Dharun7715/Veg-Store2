@@ -5,71 +5,91 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+
 body {
     margin: 0;
     font-family: Arial;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg,#141e30,#243b55);
+    color: white;
 }
 
 .container {
-    max-width: 420px;
+    max-width: 500px;
     margin: auto;
     padding: 15px;
 }
 
 h2 {
     text-align: center;
-    color: white;
 }
 
+/* CARD */
 .card {
-    background: white;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
     padding: 15px;
-    margin: 12px 0;
     border-radius: 15px;
+    margin-top: 15px;
 }
 
+/* TITLE */
+.title {
+    font-weight: bold;
+}
+
+/* PRICE */
+.price {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+/* STATUS */
 .status {
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    color: white;
-    display: inline-block;
-    margin-top: 5px;
+    margin-top: 8px;
+    font-size: 14px;
 }
 
-.pending { background: orange; }
-.shipped { background: blue; }
-.delivered { background: green; }
-
+/* PROGRESS BAR */
 .progress {
-    margin-top: 10px;
+    width: 100%;
     height: 8px;
-    background: #eee;
+    background: #ccc;
     border-radius: 10px;
-    overflow: hidden;
+    margin-top: 10px;
 }
 
 .bar {
     height: 100%;
-    background: green;
+    background: #2ecc71;
+    border-radius: 10px;
 }
 
-/* progress levels */
-.p1 { width: 30%; }
-.p2 { width: 70%; }
-.p3 { width: 100%; }
-
-.back {
+/* BUTTON */
+.btn {
     display: block;
     text-align: center;
-    margin-top: 15px;
+    margin-top: 10px;
     padding: 10px;
-    background: white;
     border-radius: 10px;
     text-decoration: none;
-    color: black;
+    font-weight: bold;
 }
+
+/* TRACK */
+.track {
+    background: linear-gradient(90deg,#00c853,#2ecc71);
+    color: white;
+}
+
+/* BACK */
+.back {
+    text-align: center;
+    display: block;
+    margin-top: 15px;
+    color: white;
+    opacity: 0.7;
+}
+
 </style>
 </head>
 
@@ -80,30 +100,51 @@ h2 {
 <h2>📦 My Orders</h2>
 
 {% if orders %}
-{% for item, qty, total, status in orders %}
+
+{% for o in orders %}
+
 <div class="card">
 
-<h3>{{ item }}</h3>
-<p>Qty: {{ qty }}</p>
-<p>Total: ₹{{ total }}</p>
+<div class="title">
+🛒 {{ o[2] }} × {{ o[3] }}
+</div>
 
-{% if status == 'Pending' %}
-<span class="status pending">🟡 Preparing</span>
-<div class="progress"><div class="bar p1"></div></div>
+<div class="price">
+₹{{ o[4] }}
+</div>
 
-{% elif status == 'Shipped' %}
-<span class="status shipped">🔵 Out for Delivery</span>
-<div class="progress"><div class="bar p2"></div></div>
+<div class="status">
+Status: {{ o[5] }}
+</div>
 
-{% elif status == 'Delivered' %}
-<span class="status delivered">🟢 Delivered</span>
-<div class="progress"><div class="bar p3"></div></div>
+<!-- PROGRESS BAR -->
+<div class="progress">
+<div class="bar"
+style="width:
+{% if o[5]=='Pending' %}25%
+{% elif o[5]=='Out for Delivery' %}70%
+{% elif o[5]=='Delivered' %}100%
+{% else %}40%
+{% endif %}
+">
+</div>
+</div>
+
+<!-- TRACK BUTTON -->
+{% if o[5] != 'Delivered' %}
+<a href="/track" class="btn track">
+📍 Track Order
+</a>
 {% endif %}
 
 </div>
+
 {% endfor %}
+
 {% else %}
-<p style="color:white; text-align:center;">No orders yet 😢</p>
+
+<p style="text-align:center;">No orders yet 😢</p>
+
 {% endif %}
 
 <a href="/" class="back">⬅ Back to Home</a>
